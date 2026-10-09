@@ -69,3 +69,7 @@
 - `AEffReinstCtxSN/` - variant of reinstallable interrupt handlers without sum and unit types: computations carry a reinstall context (`Γ ∣ ∅ ⊢M⦂ Y` outside handler code, `Γ ∣ re X ⊢M⦂ Y` inside the code of a handler for promises of type `⟨ X ⟩`), and handler code may call `reinstall` in tail position
 
     - `AEffReinstCtxBaseSN/` - definition of this calculus (with reinstall substitution and the corresponding trigger rule), its substitution properties, continuations, and the proof of strong normalisation for it
+
+    - `Types.agda`, `AEff.agda`, `Renamings.agda`, `Substitutions.agda`, `Preservation.agda`, `Progress.agda`, `Finality.agda`, `ProcessPreservation.agda`, `ProcessProgress.agda`, `ProcessFinality.agda` - the effect-typed version of this calculus (`Γ ∣ Δ ⊢M⦂ C`, with `reinstall : ⟨ X ⟩ ! (o , i)` in reinstall context `re X (o , i)`), together with its type safety (preservation, progress, finality) for computations and processes
+
+    - `Simulation.agda` - proof that `AEffReinstCtxBaseSN` simulates the effect-typed calculus (erasing effect annotations and coercions) and that the latter's sequential part is strongly normalising

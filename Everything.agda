@@ -86,3 +86,14 @@ import AEffReinstCtxSN.AEffReinstCtxBaseSN.SubstitutionProperties
 import AEffReinstCtxSN.AEffReinstCtxBaseSN.StronglyNormalising
 import AEffReinstCtxSN.AEffReinstCtxBaseSN.Continuations
 import AEffReinstCtxSN.AEffReinstCtxBaseSN.Main
+import AEffReinstCtxSN.AEff
+import AEffReinstCtxSN.Finality
+import AEffReinstCtxSN.Preservation
+import AEffReinstCtxSN.ProcessFinality
+import AEffReinstCtxSN.ProcessPreservation
+import AEffReinstCtxSN.ProcessProgress
+import AEffReinstCtxSN.Progress
+import AEffReinstCtxSN.Renamings
+import AEffReinstCtxSN.Substitutions
+import AEffReinstCtxSN.Types
+import AEffReinstCtxSN.Simulation

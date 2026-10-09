@@ -3,8 +3,8 @@
 open import Data.List using (List; []) renaming (_∷_ to _∷ₗ_)
 
 open import AEffReinstSN.CoinductiveEffectAnnotations using (Σₛ)
-open import AEffReinstSN.AEff using (payload; Σ-base; ar-base)
-open import AEffReinstSN.Types using (BType; GType)
+open import AEffReinstCtxSN.AEff using (payload; Σ-base; ar-base)
+open import AEffReinstCtxSN.Types using (BType; GType)
 
 open import Relation.Binary.PropositionalEquality using (_≢_)
 

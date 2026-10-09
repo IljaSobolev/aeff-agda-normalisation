@@ -10,7 +10,7 @@ open import Relation.Binary.PropositionalEquality using (_≡_; refl; cong₂)
 open import Function using (_∘_)
 
 open import AEffReinstSN.CoinductiveEffectAnnotations using (Σₛ)
-open import AEffReinstSN.AEff using (payload)
+open import AEffReinstCtxSN.AEff using (payload)
 
 module AEffReinstCtxSN.AEffReinstCtxBaseSN.Continuations where
 
