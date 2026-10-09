@@ -96,35 +96,34 @@ data Occ where
   rawait₂   : {V : RV} {M : RC} → Occ M → Occ (rawait V M)
 
 
--- AN OCCURRENCE OF reinstall IN A NON-TAIL POSITION OF HANDLER CODE: SOMEWHERE IN THE RAW TERM
--- (POSSIBLY INSIDE THE CODE OF A HANDLER) THERE IS A ƛ-ABSTRACTION, THE BODY OF AN ↓,
--- OR A let-BOUND COMPUTATION WITH AN OCCURRENCE OF reinstall NOT INSIDE ANY FURTHER HANDLER CODE
+-- AN OCCURRENCE OF reinstall IN A MISPLACED POSITION OF HANDLER CODE: SOMEWHERE IN THE RAW TERM
+-- (POSSIBLY INSIDE THE CODE OF A HANDLER) THERE IS A ƛ-ABSTRACTION OR THE BODY OF AN ↓
+-- WITH AN OCCURRENCE OF reinstall NOT INSIDE ANY FURTHER HANDLER CODE
 
-data NonTailV : RV → Set
+data MisplacedV : RV → Set
 
-data NonTail : RC → Set
+data Misplaced : RC → Set
 
-data NonTailV where
-  rƛ-occ : {M : RC} → Occ M → NonTailV (rƛ M)
-  rƛ     : {M : RC} → NonTail M → NonTailV (rƛ M)
-  r⟨_⟩   : {V : RV} → NonTailV V → NonTailV r⟨ V ⟩
+data MisplacedV where
+  rƛ-occ : {M : RC} → Occ M → MisplacedV (rƛ M)
+  rƛ     : {M : RC} → Misplaced M → MisplacedV (rƛ M)
+  r⟨_⟩   : {V : RV} → MisplacedV V → MisplacedV r⟨ V ⟩
 
-data NonTail where
-  r↓-occ    : {op : Σₛ} {V : RV} {M : RC} → Occ M → NonTail (r↓ op V M)
-  rlet-occ  : {M N : RC} → Occ M → NonTail (rlet M N)
-  rreturn   : {V : RV} → NonTailV V → NonTail (rreturn V)
-  r·₁       : {V W : RV} → NonTailV V → NonTail (V r· W)
-  r·₂       : {V W : RV} → NonTailV W → NonTail (V r· W)
-  rlet₁     : {M N : RC} → NonTail M → NonTail (rlet M N)
-  rlet₂     : {M N : RC} → NonTail N → NonTail (rlet M N)
-  r↑₁       : {op : Σₛ} {V : RV} {M : RC} → NonTailV V → NonTail (r↑ op V M)
-  r↑₂       : {op : Σₛ} {V : RV} {M : RC} → NonTail M → NonTail (r↑ op V M)
-  r↓₁       : {op : Σₛ} {V : RV} {M : RC} → NonTailV V → NonTail (r↓ op V M)
-  r↓₂       : {op : Σₛ} {V : RV} {M : RC} → NonTail M → NonTail (r↓ op V M)
-  rpromise₁ : {op : Σₛ} {M N : RC} → NonTail M → NonTail (rpromise op M N)
-  rpromise₂ : {op : Σₛ} {M N : RC} → NonTail N → NonTail (rpromise op M N)
-  rawait₁   : {V : RV} {M : RC} → NonTailV V → NonTail (rawait V M)
-  rawait₂   : {V : RV} {M : RC} → NonTail M → NonTail (rawait V M)
+data Misplaced where
+  r↓-occ    : {op : Σₛ} {V : RV} {M : RC} → Occ M → Misplaced (r↓ op V M)
+  rreturn   : {V : RV} → MisplacedV V → Misplaced (rreturn V)
+  r·₁       : {V W : RV} → MisplacedV V → Misplaced (V r· W)
+  r·₂       : {V W : RV} → MisplacedV W → Misplaced (V r· W)
+  rlet₁     : {M N : RC} → Misplaced M → Misplaced (rlet M N)
+  rlet₂     : {M N : RC} → Misplaced N → Misplaced (rlet M N)
+  r↑₁       : {op : Σₛ} {V : RV} {M : RC} → MisplacedV V → Misplaced (r↑ op V M)
+  r↑₂       : {op : Σₛ} {V : RV} {M : RC} → Misplaced M → Misplaced (r↑ op V M)
+  r↓₁       : {op : Σₛ} {V : RV} {M : RC} → MisplacedV V → Misplaced (r↓ op V M)
+  r↓₂       : {op : Σₛ} {V : RV} {M : RC} → Misplaced M → Misplaced (r↓ op V M)
+  rpromise₁ : {op : Σₛ} {M N : RC} → Misplaced M → Misplaced (rpromise op M N)
+  rpromise₂ : {op : Σₛ} {M N : RC} → Misplaced N → Misplaced (rpromise op M N)
+  rawait₁   : {V : RV} {M : RC} → MisplacedV V → Misplaced (rawait V M)
+  rawait₂   : {V : RV} {M : RC} → Misplaced M → Misplaced (rawait V M)
 
 
 -- THE ERASURE OF A WELL-TYPED VALUE, OR OF A WELL-TYPED COMPUTATION OUTSIDE OF
@@ -160,42 +159,41 @@ occ-m (await V until M) (rawait₂ p) = occ-m M p
 occ-m (coerce q r M) p = occ-m M p
 
 
--- THE ERASURE OF A WELL-TYPED TERM NEVER CONTAINS reinstall IN A NON-TAIL POSITION
--- (UNDER A ƛ, UNDER AN ↓, OR IN A let-BOUND COMPUTATION) OF HANDLER CODE
+-- THE ERASURE OF A WELL-TYPED TERM NEVER CONTAINS reinstall IN A MISPLACED POSITION
+-- (UNDER A ƛ OR UNDER AN ↓) OF HANDLER CODE
 
-nontail-v : {Γ : Ctx}
-            {X : VType}
-            (V : Γ ⊢V⦂ X) →
-            -----------------
-            ¬ NonTailV ⌊ V ⌋v
+misplaced-v : {Γ : Ctx}
+              {X : VType}
+              (V : Γ ⊢V⦂ X) →
+              -------------------
+              ¬ MisplacedV ⌊ V ⌋v
 
-nontail-m : {Γ : Ctx}
-            {Δ : RCtx}
-            {C : CType}
-            (M : Γ ∣ Δ ⊢M⦂ C) →
-            -------------------
-            ¬ NonTail ⌊ M ⌋
+misplaced-m : {Γ : Ctx}
+              {Δ : RCtx}
+              {C : CType}
+              (M : Γ ∣ Δ ⊢M⦂ C) →
+              -----------------
+              ¬ Misplaced ⌊ M ⌋
 
-nontail-v (ƛ M) (rƛ-occ p) = occ-m M p
-nontail-v (ƛ M) (rƛ p) = nontail-m M p
-nontail-v ⟨ V ⟩ r⟨ p ⟩ = nontail-v V p
+misplaced-v (ƛ M) (rƛ-occ p) = occ-m M p
+misplaced-v (ƛ M) (rƛ p) = misplaced-m M p
+misplaced-v ⟨ V ⟩ r⟨ p ⟩ = misplaced-v V p
 
-nontail-m (return V) (rreturn p) = nontail-v V p
-nontail-m (let= M `in N) (rlet-occ p) = occ-m M p
-nontail-m (let= M `in N) (rlet₁ p) = nontail-m M p
-nontail-m (let= M `in N) (rlet₂ p) = nontail-m N p
-nontail-m (V · W) (r·₁ p) = nontail-v V p
-nontail-m (V · W) (r·₂ p) = nontail-v W p
-nontail-m (↑ op q V M) (r↑₁ p) = nontail-v V p
-nontail-m (↑ op q V M) (r↑₂ p) = nontail-m M p
-nontail-m (↓ op V M) (r↓-occ p) = occ-m M p
-nontail-m (↓ op V M) (r↓₁ p) = nontail-v V p
-nontail-m (↓ op V M) (r↓₂ p) = nontail-m M p
-nontail-m (promise op ∣ q ↦ M `in N) (rpromise₁ p) = nontail-m M p
-nontail-m (promise op ∣ q ↦ M `in N) (rpromise₂ p) = nontail-m N p
-nontail-m (await V until M) (rawait₁ p) = nontail-v V p
-nontail-m (await V until M) (rawait₂ p) = nontail-m M p
-nontail-m (coerce q r M) p = nontail-m M p
+misplaced-m (return V) (rreturn p) = misplaced-v V p
+misplaced-m (let= M `in N) (rlet₁ p) = misplaced-m M p
+misplaced-m (let= M `in N) (rlet₂ p) = misplaced-m N p
+misplaced-m (V · W) (r·₁ p) = misplaced-v V p
+misplaced-m (V · W) (r·₂ p) = misplaced-v W p
+misplaced-m (↑ op q V M) (r↑₁ p) = misplaced-v V p
+misplaced-m (↑ op q V M) (r↑₂ p) = misplaced-m M p
+misplaced-m (↓ op V M) (r↓-occ p) = occ-m M p
+misplaced-m (↓ op V M) (r↓₁ p) = misplaced-v V p
+misplaced-m (↓ op V M) (r↓₂ p) = misplaced-m M p
+misplaced-m (promise op ∣ q ↦ M `in N) (rpromise₁ p) = misplaced-m M p
+misplaced-m (promise op ∣ q ↦ M `in N) (rpromise₂ p) = misplaced-m N p
+misplaced-m (await V until M) (rawait₁ p) = misplaced-v V p
+misplaced-m (await V until M) (rawait₂ p) = misplaced-m M p
+misplaced-m (coerce q r M) p = misplaced-m M p
 
 
 -- THE FIRST COUNTEREXAMPLE ↓ op (V , promise (op x r ↦ ↓ op (x , r ())) as p in return p)
@@ -205,17 +203,17 @@ M₁raw : Σₛ → RV → RC
 M₁raw op V =
   r↓ op V (rpromise op (r↓ op (rvar 0) rreinstall) (rreturn (rvar 0)))
 
-M₁raw-nontail : {op : Σₛ}
-                {V : RV} →
-                ----------------------
-                NonTail (M₁raw op V)
-M₁raw-nontail = r↓₂ (rpromise₁ (r↓-occ here))
+M₁raw-misplaced : {op : Σₛ}
+                  {V : RV} →
+                  ----------------------
+                  Misplaced (M₁raw op V)
+M₁raw-misplaced = r↓₂ (rpromise₁ (r↓-occ here))
 
 
 -- THE SECOND COUNTEREXAMPLE ↓ op (V , promise (op x r ↦ return ⟨ fun () ↦ N ⟩) as p in
 -- await p until y in y ()), WHERE N = let p = r () in await p until y in y (),
--- IN WHICH reinstall IS UNDER A ƛ (AND IN A let-BOUND POSITION), AND WHERE THE TWO
--- ARGUMENTS () ARE RENDERED AS ARBITRARY RAW VALUES U AND U'
+-- IN WHICH reinstall IS UNDER A ƛ, AND WHERE THE TWO ARGUMENTS () ARE RENDERED
+-- AS ARBITRARY RAW VALUES U AND U'
 
 M₂raw : Σₛ → RV → RV → RV → RC
 M₂raw op V U U' =
@@ -224,11 +222,11 @@ M₂raw op V U U' =
       (rreturn r⟨ rƛ (rlet rreinstall (rawait (rvar 0) (rvar 0 r· U))) ⟩)
       (rawait (rvar 0) (rvar 0 r· U')))
 
-M₂raw-nontail : {op : Σₛ}
-                {V U U' : RV} →
-                -------------------------
-                NonTail (M₂raw op V U U')
-M₂raw-nontail = r↓₂ (rpromise₁ (rreturn r⟨ rƛ-occ (rlet₁ here) ⟩))
+M₂raw-misplaced : {op : Σₛ}
+                  {V U U' : RV} →
+                  ---------------------------
+                  Misplaced (M₂raw op V U U')
+M₂raw-misplaced = r↓₂ (rpromise₁ (rreturn r⟨ rƛ-occ (rlet₁ here) ⟩))
 
 
 -- NEITHER OF THE COUNTEREXAMPLES IS THE ERASURE OF A WELL-TYPED COMPUTATION
@@ -241,7 +239,7 @@ M₁-untypable : {Γ : Ctx}
                --------------------------------------------
                ¬ Σ (Γ ∣ Δ ⊢M⦂ C) (λ M → ⌊ M ⌋ ≡ M₁raw op V)
 M₁-untypable op V (M , p) =
-  nontail-m M (subst NonTail (sym p) M₁raw-nontail)
+  misplaced-m M (subst Misplaced (sym p) M₁raw-misplaced)
 
 M₂-untypable : {Γ : Ctx}
                {Δ : RCtx}
@@ -251,7 +249,7 @@ M₂-untypable : {Γ : Ctx}
                -------------------------------------------------
                ¬ Σ (Γ ∣ Δ ⊢M⦂ C) (λ M → ⌊ M ⌋ ≡ M₂raw op V U U')
 M₂-untypable op V U U' (M , p) =
-  nontail-m M (subst NonTail (sym p) M₂raw-nontail)
+  misplaced-m M (subst Misplaced (sym p) M₂raw-misplaced)
 
 
 -- THE FIRST COUNTEREXAMPLE IS REJECTED BY THE INTRINSICALLY TYPED SYNTAX:

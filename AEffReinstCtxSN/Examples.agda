@@ -224,3 +224,147 @@ nested-run V W =
   context (promise _ ∣ _ ↦ _ `in (promise _ ∣ _ ↦ _ `in (↓ _ _ [-]))) (↓-return _ _) ∷*
   context (promise _ ∣ _ ↦ _ `in (promise _ ∣ _ ↦ _ `in [-])) (↓-return _ _) ∷*
   []*
+
+
+-- AN EARLY-REINSTALL SERVER: promise (request x ↦ let q = reinstall in let y = return w in
+-- ↑ response y (return q)) as p in return p, WHOSE CODE REINSTALLS THE HANDLER IN A let-BOUND
+-- POSITION BEFORE ISSUING THE RESPONSE, AND RETURNS THE PROMISE OF THE REINSTALLED HANDLER
+
+early-code : {Γ : Ctx}
+             {X : VType} →
+             ```(payload response) ∈ Γ →
+             ---------------------------------------------------------------------------------------------
+             Γ ∷ ```(payload request) ∣ re X (reinst-eff request [ response ]ₒ i-server) ⊢M⦂ ⟨ X ⟩ ! ([ response ]ₒ , i-server)
+early-code w =
+  let= coerce ∅ₒ-⊑ₒ loop-⊑ᵢ reinstall `in
+  let= return (` Tl (Tl w)) `in
+  ↑ response ∈-[]ₒ (` Hd) (return (` Tl Hd))
+
+early-server : {Γ : Ctx}
+               {X : VType} →
+               ```(payload response) ∈ Γ →
+               ----------------------------------------------
+               Γ ⊢M⦂ ⟨ X ⟩ ! ([ response ]ₒ , i-server)
+early-server w =
+  promise request ∣ loop-hit ↦ early-code w `in return (` Hd)
+
+
+-- AFTER A request INTERRUPT, THE REINSTALLED HANDLER FLOATS OUT BEFORE THE RESPONSE IS ISSUED,
+-- SO THAT A SECOND request INTERRUPT IS HANDLED BY IT WHILE THE FIRST RESPONSE IS STILL PENDING IN N
+
+early-run : {Γ : Ctx}
+            {X : VType}
+            (w : ```(payload response) ∈ Γ)
+            (V₁ V₂ : Γ ⊢V⦂ ```(payload request)) →
+            ------------------------------------------------------------------------------------------
+            Σ[ p ∈ _ ] Σ[ q ∈ _ ] Σ[ N ∈ Γ ∷ ⟨ X ⟩ ⊢M⦂ ⟨ X ⟩ ! (request ↓ₑ ([ response ]ₒ , i-server)) ]
+              (↓ request V₁ (↓ request V₂ (early-server {X = X} w))
+               ↝*
+               let= coerce p q ((early-code w [ id-subst [ V₁ ]s ]m) [ reinst-handler (early-code w) ]r) `in
+               ↓ request (V-rename wk₁ V₁) N)
+early-run w V₁ V₂ =
+  _ , _ , _ ,
+  context (↓ _ _ [-]) (↓-promise-op _ _ _ _) ∷*
+  context (↓ _ _ (let= coerce _ _ (let= [-] `in _) `in _)) (coerce-promise _ _ _) ∷*
+  context (↓ _ _ (let= coerce _ _ [-] `in _)) (let-promise _ _ _ _) ∷*
+  context (↓ _ _ (let= [-] `in _)) (coerce-promise _ _ _) ∷*
+  context (↓ _ _ [-]) (let-promise _ _ _ _) ∷*
+  ↓-promise-op _ _ _ _ ∷*
+  []*
+
+
+-- RUNNING THE EARLY-REINSTALL SERVER UNDER TWO INCOMING REQUESTS TO THE END ISSUES TWO RESPONSES
+-- AND LEAVES THE HANDLER REINSTALLED BY THE SECOND REQUEST WAITING FOR THE NEXT ONE
+
+early-run-final : {Γ : Ctx}
+                  {X : VType}
+                  (w : ```(payload response) ∈ Γ)
+                  (V₁ V₂ : Γ ⊢V⦂ ```(payload request)) →
+                  ------------------------------------------------------------------------------
+                  Σ[ r₁ ∈ _ ] Σ[ r₂ ∈ _ ] Σ[ p ∈ _ ]
+                    (↓ request V₁ (↓ request V₂ (early-server {X = X} w))
+                     ↝*
+                     ↑ response r₁ (` w) (↑ response r₂ (` w)
+                       (promise request ∣ p ↦ early-code w `in return (` Hd))))
+early-run-final w V₁ V₂ =
+  _ , _ , _ ,
+  context (↓ _ _ [-]) (↓-promise-op _ _ _ _) ∷*
+  context (↓ _ _ (let= coerce _ _ (let= [-] `in _) `in _)) (coerce-promise _ _ _) ∷*
+  context (↓ _ _ (let= coerce _ _ [-] `in _)) (let-promise _ _ _ _) ∷*
+  context (↓ _ _ (let= [-] `in _)) (coerce-promise _ _ _) ∷*
+  context (↓ _ _ [-]) (let-promise _ _ _ _) ∷*
+  ↓-promise-op _ _ _ _ ∷*
+  context (let= coerce _ _ (let= [-] `in _) `in _) (coerce-promise _ _ _) ∷*
+  context (let= coerce _ _ [-] `in _) (let-promise _ _ _ _) ∷*
+  context (let= [-] `in _) (coerce-promise _ _ _) ∷*
+  let-promise _ _ _ _ ∷*
+  context (promise _ ∣ _ ↦ _ `in (let= coerce _ _ (let= [-] `in _) `in _)) (coerce-return _) ∷*
+  context (promise _ ∣ _ ↦ _ `in (let= coerce _ _ [-] `in _)) (let-return _ _) ∷*
+  context (promise _ ∣ _ ↦ _ `in (let= coerce _ _ [-] `in _)) (let-return _ _) ∷*
+  context (promise _ ∣ _ ↦ _ `in (let= [-] `in _)) (coerce-↑ _ _ _) ∷*
+  context (promise _ ∣ _ ↦ _ `in [-]) (let-↑ _ _ _ _) ∷*
+  promise-↑ _ _ _ _ _ ∷*
+  context (↑ _ _ _ (promise _ ∣ _ ↦ _ `in (let= [-] `in _))) (coerce-return _) ∷*
+  context (↑ _ _ _ (promise _ ∣ _ ↦ _ `in [-])) (let-return _ _) ∷*
+  context (↑ _ _ _ (promise _ ∣ _ ↦ _ `in (↓ _ _ (let= coerce _ _ (let= [-] `in _) `in _)))) (coerce-return _) ∷*
+  context (↑ _ _ _ (promise _ ∣ _ ↦ _ `in (↓ _ _ (let= coerce _ _ [-] `in _)))) (let-return _ _) ∷*
+  context (↑ _ _ _ (promise _ ∣ _ ↦ _ `in (↓ _ _ (let= coerce _ _ [-] `in _)))) (let-return _ _) ∷*
+  context (↑ _ _ _ (promise _ ∣ _ ↦ _ `in (↓ _ _ (let= [-] `in _)))) (coerce-↑ _ _ _) ∷*
+  context (↑ _ _ _ (promise _ ∣ _ ↦ _ `in (↓ _ _ [-]))) (let-↑ _ _ _ _) ∷*
+  context (↑ _ _ _ (promise _ ∣ _ ↦ _ `in [-])) (↓-↑ _ _ _ _) ∷*
+  context (↑ _ _ _ [-]) (promise-↑ _ _ _ _ _) ∷*
+  context (↑ _ _ _ (↑ _ _ _ (promise _ ∣ _ ↦ _ `in (↓ _ _ (let= [-] `in _))))) (coerce-return _) ∷*
+  context (↑ _ _ _ (↑ _ _ _ (promise _ ∣ _ ↦ _ `in (↓ _ _ [-])))) (let-return _ _) ∷*
+  context (↑ _ _ _ (↑ _ _ _ (promise _ ∣ _ ↦ _ `in (↓ _ _ [-])))) (↓-return _ _) ∷*
+  context (↑ _ _ _ (↑ _ _ _ (promise _ ∣ _ ↦ _ `in [-]))) (↓-return _ _) ∷*
+  []*
+
+
+-- A DOUBLE REINSTALL: promise (go x ↦ let _ = reinstall in reinstall) as p in return p,
+-- WHOSE CODE REINSTALLS THE HANDLER TWICE
+
+double-code : {Γ : Ctx}
+              {X : VType} →
+              -------------------------------------------------------------------------------
+              Γ ∷ ```(payload go) ∣ re X (reinst-eff go ∅ₒ i-inner) ⊢M⦂ ⟨ X ⟩ ! (∅ₒ , i-inner)
+double-code =
+  let= coerce ⊑ₒ-refl loop-⊑ᵢ reinstall `in
+  coerce ⊑ₒ-refl loop-⊑ᵢ reinstall
+
+double : {Γ : Ctx}
+         {X : VType} →
+         -----------------------------
+         Γ ⊢M⦂ ⟨ X ⟩ ! (∅ₒ , i-inner)
+double =
+  promise go ∣ loop-hit ↦ double-code `in return (` Hd)
+
+
+-- AFTER A go INTERRUPT, TWO COPIES OF THE HANDLER ARE INSTALLED AND WAITING
+
+double-run : {Γ : Ctx}
+             {X : VType}
+             (V : Γ ⊢V⦂ ```(payload go)) →
+             ---------------------------------------------------
+             Σ[ p ∈ _ ] Σ[ q ∈ _ ]
+               (↓ go V (double {X = X})
+                ↝*
+                promise go ∣ p ↦ double-code `in
+                promise go ∣ q ↦ double-code `in
+                return (` Hd))
+double-run V =
+  _ , _ ,
+  ↓-promise-op _ _ _ _ ∷*
+  context (let= coerce _ _ (let= [-] `in _) `in _) (coerce-promise _ _ _) ∷*
+  context (let= coerce _ _ [-] `in _) (let-promise _ _ _ _) ∷*
+  context (let= [-] `in _) (coerce-promise _ _ _) ∷*
+  let-promise _ _ _ _ ∷*
+  context (promise _ ∣ _ ↦ _ `in (let= coerce _ _ (let= [-] `in _) `in _)) (coerce-return _) ∷*
+  context (promise _ ∣ _ ↦ _ `in (let= coerce _ _ [-] `in _)) (let-return _ _) ∷*
+  context (promise _ ∣ _ ↦ _ `in (let= coerce _ _ [-] `in _)) (coerce-promise _ _ _) ∷*
+  context (promise _ ∣ _ ↦ _ `in (let= [-] `in _)) (coerce-promise _ _ _) ∷*
+  context (promise _ ∣ _ ↦ _ `in [-]) (let-promise _ _ _ _) ∷*
+  context (promise _ ∣ _ ↦ _ `in (promise _ ∣ _ ↦ _ `in (let= coerce _ _ [-] `in _))) (coerce-return _) ∷*
+  context (promise _ ∣ _ ↦ _ `in (promise _ ∣ _ ↦ _ `in (let= [-] `in _))) (coerce-return _) ∷*
+  context (promise _ ∣ _ ↦ _ `in (promise _ ∣ _ ↦ _ `in [-])) (let-return _ _) ∷*
+  context (promise _ ∣ _ ↦ _ `in (promise _ ∣ _ ↦ _ `in [-])) (↓-return _ _) ∷*
+  []*

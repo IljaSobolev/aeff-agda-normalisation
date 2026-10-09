@@ -66,7 +66,7 @@
 
     - `Simulation.agda` - proof that AEffReinstBase simulates AEff and that the sequential part of AEffReinst is strongly normalising
 
-- `AEffReinstCtxSN/` - variant of reinstallable interrupt handlers without sum and unit types: computations carry a reinstall context (`Γ ∣ ∅ ⊢M⦂ Y` outside handler code, `Γ ∣ re X ⊢M⦂ Y` inside the code of a handler for promises of type `⟨ X ⟩`), and handler code may call `reinstall` in tail position
+- `AEffReinstCtxSN/` - variant of reinstallable interrupt handlers without sum and unit types: computations carry a reinstall context (`Γ ∣ ∅ ⊢M⦂ Y` outside handler code, `Γ ∣ re X ⊢M⦂ Y` inside the code of a handler for promises of type `⟨ X ⟩`), and handler code may call `reinstall` in tail and let-bound positions (possibly several times, using the returned promise), but not under `↓` or `ƛ`
 
     - `AEffReinstCtxBaseSN/` - definition of this calculus (with reinstall substitution and the corresponding trigger rule), its substitution properties, continuations, and the proof of strong normalisation for it
 
@@ -76,6 +76,6 @@
 
     - `ExamplePreliminaries.agda` - recursive interrupt annotations for reinstallable handlers and the reflexive-transitive closure of reduction, used by the examples
 
-    - `Examples.agda` - examples of reinstallable handlers (a server, pre-emptive threads, nested handlers) with their recursive effect annotations, and explicit reduction sequences for them
+    - `Examples.agda` - examples of reinstallable handlers (a server, an early-reinstall server, pre-emptive threads, nested handlers, a double reinstall) with their recursive effect annotations, and explicit reduction sequences for them
 
     - `Counterexamples.agda` - proof that the counterexamples to strong normalisation of the design with a first-class reinstall function (reinstall under an interrupt, reinstall leaked in a function) are not erasures of well-typed terms, together with their closest well-typed analogues and their reductions to normal forms
