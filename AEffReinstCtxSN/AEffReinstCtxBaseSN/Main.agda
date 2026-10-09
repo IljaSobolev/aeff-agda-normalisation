@@ -335,8 +335,6 @@ ared-await-r {N = N} {R = R} K rK rN sR {r = r} {V = V} rV =
 
 -- INTERRUPT HANDLERS ARE REDUCIBLE
 
-{- PROPOSITION 20 -}
-
 sn-promise : (K : Γ ⊢K⦂ Y ⊸ Z [ k ]) →
              KRed (K ∘l N) →
              CRedSubR' M →
