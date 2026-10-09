@@ -97,3 +97,6 @@ import AEffReinstCtxSN.Renamings
 import AEffReinstCtxSN.Substitutions
 import AEffReinstCtxSN.Types
 import AEffReinstCtxSN.Simulation
+import AEffReinstCtxSN.ExamplePreliminaries
+import AEffReinstCtxSN.Examples
+import AEffReinstCtxSN.Counterexamples

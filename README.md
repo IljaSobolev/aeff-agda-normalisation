@@ -73,3 +73,9 @@
     - `Types.agda`, `AEff.agda`, `Renamings.agda`, `Substitutions.agda`, `Preservation.agda`, `Progress.agda`, `Finality.agda`, `ProcessPreservation.agda`, `ProcessProgress.agda`, `ProcessFinality.agda` - the effect-typed version of this calculus (`Γ ∣ Δ ⊢M⦂ C`, with `reinstall : ⟨ X ⟩ ! (o , i)` in reinstall context `re X (o , i)`), together with its type safety (preservation, progress, finality) for computations and processes
 
     - `Simulation.agda` - proof that `AEffReinstCtxBaseSN` simulates the effect-typed calculus (erasing effect annotations and coercions) and that the latter's sequential part is strongly normalising
+
+    - `ExamplePreliminaries.agda` - recursive interrupt annotations for reinstallable handlers and the reflexive-transitive closure of reduction, used by the examples
+
+    - `Examples.agda` - examples of reinstallable handlers (a server, pre-emptive threads, nested handlers) with their recursive effect annotations, and explicit reduction sequences for them
+
+    - `Counterexamples.agda` - proof that the counterexamples to strong normalisation of the design with a first-class reinstall function (reinstall under an interrupt, reinstall leaked in a function) are not erasures of well-typed terms, together with their closest well-typed analogues and their reductions to normal forms
