@@ -34,7 +34,7 @@ data RCtx : Set where
   re : Type → RCtx
 
 variable
-  ρ ρ' : RCtx
+  Δ Δ' : RCtx
 
 -- SNOC LISTS FOR MODELLING CONTEXTS
 
@@ -49,7 +49,7 @@ data SnocList (A : Set) : Set where
 Ctx = SnocList Type
 
 variable
-  Γ Γ' Γ'' Δ Δ' : Ctx
+  Γ Γ' Γ'' : Ctx
 
 data _∈_ (X : Type) : Ctx → Set where
   Hd : X ∈ (Γ ∷ X)
@@ -73,43 +73,43 @@ data _∣_⊢M⦂_ Γ where
 
   return         : Γ ⊢V⦂ Y →
                    -------
-                   Γ ∣ ρ ⊢M⦂ Y
+                   Γ ∣ Δ ⊢M⦂ Y
 
   _·_            : Γ ⊢V⦂ X ⇒ Y →
                    Γ ⊢V⦂ X →
                    -------
-                   Γ ∣ ρ ⊢M⦂ Y
+                   Γ ∣ Δ ⊢M⦂ Y
 
   reinstall      : -------
                    Γ ∣ re X ⊢M⦂ ⟨ X ⟩
 
   let=_`in_      : Γ ∣ ∅ ⊢M⦂ X →
-                   Γ ∷ X ∣ ρ ⊢M⦂ Y →
+                   Γ ∷ X ∣ Δ ⊢M⦂ Y →
                    -------
-                   Γ ∣ ρ ⊢M⦂ Y
+                   Γ ∣ Δ ⊢M⦂ Y
 
   ↑              : (op : Σₛ) →
                    Γ ⊢V⦂ ```(payload op) →
-                   Γ ∣ ρ ⊢M⦂ Y →
+                   Γ ∣ Δ ⊢M⦂ Y →
                    -------
-                   Γ ∣ ρ ⊢M⦂ Y
+                   Γ ∣ Δ ⊢M⦂ Y
 
   ↓              : (op : Σₛ) →
                    Γ ⊢V⦂ ```(payload op) →
                    Γ ∣ ∅ ⊢M⦂ Y →
                    -------
-                   Γ ∣ ρ ⊢M⦂ Y
+                   Γ ∣ Δ ⊢M⦂ Y
 
   promise_↦_`in_ : (op : Σₛ) →
                    Γ ∷ ```(payload op) ∣ re X ⊢M⦂ ⟨ X ⟩ →
-                   Γ ∷ ⟨ X ⟩ ∣ ρ ⊢M⦂ Y →
+                   Γ ∷ ⟨ X ⟩ ∣ Δ ⊢M⦂ Y →
                    -------
-                   Γ ∣ ρ ⊢M⦂ Y
+                   Γ ∣ Δ ⊢M⦂ Y
 
   await_until_   : Γ ⊢V⦂ ⟨ X ⟩ →
-                   Γ ∷ X ∣ ρ ⊢M⦂ Y →
+                   Γ ∷ X ∣ Δ ⊢M⦂ Y →
                    -------
-                   Γ ∣ ρ ⊢M⦂ Y
+                   Γ ∣ Δ ⊢M⦂ Y
 
 -- COMPUTATIONS OUTSIDE OF HANDLER CODE
 
@@ -118,7 +118,7 @@ _⊢M⦂_ : Ctx → Type → Set
 
 variable
   V V' W W' : Γ ⊢V⦂ X
-  M M' N N' L L' : Γ ∣ ρ ⊢M⦂ X
+  M M' N N' L L' : Γ ∣ Δ ⊢M⦂ X
 
 
 -- SET OF RENAMINGS BETWEEN CONTEXTS
@@ -147,7 +147,7 @@ wk₂ f (Tl v) = Tl (f v)
 
 V-rename : Ren Γ Γ' → Γ ⊢V⦂ X → Γ' ⊢V⦂ X
 
-M-rename : Ren Γ Γ' → Γ ∣ ρ ⊢M⦂ X → Γ' ∣ ρ ⊢M⦂ X
+M-rename : Ren Γ Γ' → Γ ∣ Δ ⊢M⦂ X → Γ' ∣ Δ ⊢M⦂ X
 
 V-rename f (` x) =
   ` f x
@@ -206,7 +206,7 @@ infix 40 _[_]m
 
 _[_]v : Γ ⊢V⦂ X → Sub Γ Γ' → Γ' ⊢V⦂ X
 
-_[_]m : Γ ∣ ρ ⊢M⦂ X → Sub Γ Γ' → Γ' ∣ ρ ⊢M⦂ X
+_[_]m : Γ ∣ Δ ⊢M⦂ X → Sub Γ Γ' → Γ' ∣ Δ ⊢M⦂ X
 
 (` x) [ s ]v =
   s x

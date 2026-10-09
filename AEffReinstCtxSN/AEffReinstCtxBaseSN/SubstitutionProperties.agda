@@ -246,7 +246,7 @@ wk₁V[id-subst[W]] V W =
     V-rename wk₁ V [ id-subst [ W ]s ]v
   ∎
 
-wk₂wk₁M[liftid-subst[W]] : (M : Γ ∷ Z ∣ ρ ⊢M⦂ X) (W : Γ ⊢V⦂ Y) →
+wk₂wk₁M[liftid-subst[W]] : (M : Γ ∷ Z ∣ Δ ⊢M⦂ X) (W : Γ ⊢V⦂ Y) →
                            ---------------------------
                            M
                            ≡
@@ -263,7 +263,7 @@ wk₂wk₁M[liftid-subst[W]] M W =
     M-rename (wk₂ wk₁) M [ lift (id-subst [ W ]s) ]m
   ∎
 
-M[lifts][id-subst[V]] : (M : Γ ∷ X ∣ ρ ⊢M⦂ Y) (V : Γ' ⊢V⦂ X) →
+M[lifts][id-subst[V]] : (M : Γ ∷ X ∣ Δ ⊢M⦂ Y) (V : Γ' ⊢V⦂ X) →
                         -----------------------------
                         M [ s [ V ]s ]m
                         ≡
@@ -278,7 +278,7 @@ M[lifts][id-subst[V]] {s = s} M V =
     M [ lift s ]m [ id-subst [ V ]s ]m
   ∎
 
-M[id-subst[V]][s] : (s : Sub Γ Γ') (M : Γ ∷ X ∣ ρ ⊢M⦂ Y) (V : Γ ⊢V⦂ X) →
+M[id-subst[V]][s] : (s : Sub Γ Γ') (M : Γ ∷ X ∣ Δ ⊢M⦂ Y) (V : Γ ⊢V⦂ X) →
                     -----------------------
                     M [ id-subst [ V ]s ]m [ s ]m
                     ≡
@@ -303,7 +303,7 @@ wk₁[V[s]] : (Z : Type) (s : Sub Γ Γ') (V : Γ ⊢V⦂ X) →
 
 wk₁[V[s]] _ _ V = sub-ren-v {V = V} (λ _ → refl)
 
-wk₁[M[s]] : (Z : Type) (s : Sub Γ Γ') (M : Γ ∣ ρ ⊢M⦂ X) →
+wk₁[M[s]] : (Z : Type) (s : Sub Γ Γ') (M : Γ ∣ Δ ⊢M⦂ X) →
             ---------------------------------
             M-rename (wk₁ {X = Z}) M [ lift s ]m
             ≡
@@ -311,7 +311,7 @@ wk₁[M[s]] : (Z : Type) (s : Sub Γ Γ') (M : Γ ∣ ρ ⊢M⦂ X) →
 
 wk₁[M[s]] _ _ M = sub-ren-m {M = M} (λ _ → refl)
 
-wk₂wk₁[M[lifts]] : (Z : Type) (s : Sub Γ Γ') (M : Γ ∷ X ∣ ρ ⊢M⦂ Y) →
+wk₂wk₁[M[lifts]] : (Z : Type) (s : Sub Γ Γ') (M : Γ ∷ X ∣ Δ ⊢M⦂ Y) →
                    ----------------------------------------------
                    M-rename (wk₂ (wk₁ {X = Z})) M [ lift (lift s) ]m
                    ≡
@@ -365,7 +365,7 @@ ren-strengthenV r (`` c) = refl
 
 -- REINSTALL SUBSTITUTION COMMUTES WITH RENAMINGS AND SUBSTITUTIONS
 
-wk₁M[id-subst[W]] : (M : Γ ∣ ρ ⊢M⦂ X) (W : Γ ⊢V⦂ Y) →
+wk₁M[id-subst[W]] : (M : Γ ∣ Δ ⊢M⦂ X) (W : Γ ⊢V⦂ Y) →
                     ---------------------------
                     M
                     ≡

@@ -445,7 +445,7 @@ subred-[]s : SubRed s → VRed V → SubRed (s [ V ]s)
 subred-[]s rs rV Hd = rV
 subred-[]s rs rV (Tl x) = rs x
 
-lift-⨟-eq : (M : Γ ∷ X ∣ ρ ⊢M⦂ Y) (s : Sub Γ Γ') (r : Ren Γ' Γ'') (V : Γ'' ⊢V⦂ X) →
+lift-⨟-eq : (M : Γ ∷ X ∣ Δ ⊢M⦂ Y) (s : Sub Γ Γ') (r : Ren Γ' Γ'') (V : Γ'' ⊢V⦂ X) →
             M [ (s ⨟ ren r) [ V ]s ]m
             ≡
             M-rename (wk₂ r) (M [ lift s ]m) [ id-subst [ V ]s ]m
