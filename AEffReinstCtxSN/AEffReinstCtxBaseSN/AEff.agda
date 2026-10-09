@@ -60,60 +60,65 @@ data _∈_ (X : Type) : Ctx → Set where
 
 data _⊢V⦂_ (Γ : Ctx) : Type → Set
 
-data _⊢M[_]⦂_ (Γ : Ctx) : RCtx → Type → Set
+data _∣_⊢M⦂_ (Γ : Ctx) : RCtx → Type → Set
 
 data _⊢V⦂_ Γ where
   `_  : X ∈ Γ → Γ ⊢V⦂ X
   ``_ : (c : Σ-base) → Γ ⊢V⦂ ```(ar-base c)
-  ƛ   : Γ ∷ X ⊢M[ ∅ ]⦂ Y → Γ ⊢V⦂ X ⇒ Y
+  ƛ   : Γ ∷ X ∣ ∅ ⊢M⦂ Y → Γ ⊢V⦂ X ⇒ Y
   ⟨_⟩ : Γ ⊢V⦂ X → Γ ⊢V⦂ ⟨ X ⟩
 
 infix 40 _·_
-data _⊢M[_]⦂_ Γ where
+data _∣_⊢M⦂_ Γ where
 
   return         : Γ ⊢V⦂ Y →
                    -------
-                   Γ ⊢M[ ρ ]⦂ Y
+                   Γ ∣ ρ ⊢M⦂ Y
 
   _·_            : Γ ⊢V⦂ X ⇒ Y →
                    Γ ⊢V⦂ X →
                    -------
-                   Γ ⊢M[ ρ ]⦂ Y
+                   Γ ∣ ρ ⊢M⦂ Y
 
   reinstall      : -------
-                   Γ ⊢M[ re X ]⦂ ⟨ X ⟩
+                   Γ ∣ re X ⊢M⦂ ⟨ X ⟩
 
-  let=_`in_      : Γ ⊢M[ ∅ ]⦂ X →
-                   Γ ∷ X ⊢M[ ρ ]⦂ Y →
+  let=_`in_      : Γ ∣ ∅ ⊢M⦂ X →
+                   Γ ∷ X ∣ ρ ⊢M⦂ Y →
                    -------
-                   Γ ⊢M[ ρ ]⦂ Y
+                   Γ ∣ ρ ⊢M⦂ Y
 
   ↑              : (op : Σₛ) →
                    Γ ⊢V⦂ ```(payload op) →
-                   Γ ⊢M[ ρ ]⦂ Y →
+                   Γ ∣ ρ ⊢M⦂ Y →
                    -------
-                   Γ ⊢M[ ρ ]⦂ Y
+                   Γ ∣ ρ ⊢M⦂ Y
 
   ↓              : (op : Σₛ) →
                    Γ ⊢V⦂ ```(payload op) →
-                   Γ ⊢M[ ∅ ]⦂ Y →
+                   Γ ∣ ∅ ⊢M⦂ Y →
                    -------
-                   Γ ⊢M[ ρ ]⦂ Y
+                   Γ ∣ ρ ⊢M⦂ Y
 
   promise_↦_`in_ : (op : Σₛ) →
-                   Γ ∷ ```(payload op) ⊢M[ re X ]⦂ ⟨ X ⟩ →
-                   Γ ∷ ⟨ X ⟩ ⊢M[ ρ ]⦂ Y →
+                   Γ ∷ ```(payload op) ∣ re X ⊢M⦂ ⟨ X ⟩ →
+                   Γ ∷ ⟨ X ⟩ ∣ ρ ⊢M⦂ Y →
                    -------
-                   Γ ⊢M[ ρ ]⦂ Y
+                   Γ ∣ ρ ⊢M⦂ Y
 
   await_until_   : Γ ⊢V⦂ ⟨ X ⟩ →
-                   Γ ∷ X ⊢M[ ρ ]⦂ Y →
+                   Γ ∷ X ∣ ρ ⊢M⦂ Y →
                    -------
-                   Γ ⊢M[ ρ ]⦂ Y
+                   Γ ∣ ρ ⊢M⦂ Y
+
+-- COMPUTATIONS OUTSIDE OF HANDLER CODE
+
+_⊢M⦂_ : Ctx → Type → Set
+Γ ⊢M⦂ X = Γ ∣ ∅ ⊢M⦂ X
 
 variable
   V V' W W' : Γ ⊢V⦂ X
-  M M' N N' L L' : Γ ⊢M[ ρ ]⦂ X
+  M M' N N' L L' : Γ ∣ ρ ⊢M⦂ X
 
 
 -- SET OF RENAMINGS BETWEEN CONTEXTS
@@ -142,7 +147,7 @@ wk₂ f (Tl v) = Tl (f v)
 
 V-rename : Ren Γ Γ' → Γ ⊢V⦂ X → Γ' ⊢V⦂ X
 
-M-rename : Ren Γ Γ' → Γ ⊢M[ ρ ]⦂ X → Γ' ⊢M[ ρ ]⦂ X
+M-rename : Ren Γ Γ' → Γ ∣ ρ ⊢M⦂ X → Γ' ∣ ρ ⊢M⦂ X
 
 V-rename f (` x) =
   ` f x
@@ -201,7 +206,7 @@ infix 40 _[_]m
 
 _[_]v : Γ ⊢V⦂ X → Sub Γ Γ' → Γ' ⊢V⦂ X
 
-_[_]m : Γ ⊢M[ ρ ]⦂ X → Sub Γ Γ' → Γ' ⊢M[ ρ ]⦂ X
+_[_]m : Γ ∣ ρ ⊢M⦂ X → Sub Γ Γ' → Γ' ∣ ρ ⊢M⦂ X
 
 (` x) [ s ]v =
   s x
@@ -235,7 +240,7 @@ reinstall [ s ]m =
 
 infix 40 _[_]r
 
-_[_]r : Γ ⊢M[ re X ]⦂ Y → Γ ⊢M[ ∅ ]⦂ ⟨ X ⟩ → Γ ⊢M[ ∅ ]⦂ Y
+_[_]r : Γ ∣ re X ⊢M⦂ Y → Γ ⊢M⦂ ⟨ X ⟩ → Γ ⊢M⦂ Y
 
 (return V) [ R ]r =
   return V
@@ -266,11 +271,11 @@ strengthen-val (`` c) = `` c
 -- (OUTSIDE OF HANDLER CODE) WITH INLINED EVALUATION CONTEXT RULES
 
 infix 10 _↝↝_
-data _↝↝_ : Γ ⊢M[ ∅ ]⦂ Y → Γ ⊢M[ ∅ ]⦂ Y → Set where
+data _↝↝_ : Γ ⊢M⦂ Y → Γ ⊢M⦂ Y → Set where
 
   -- COMPUTATIONAL RULES
 
-  apply           : (M : Γ ∷ X ⊢M[ ∅ ]⦂ Y)
+  apply           : (M : Γ ∷ X ⊢M⦂ Y)
                     (V : Γ ⊢V⦂ X) →
                     ------------
                     ƛ M · V
@@ -278,15 +283,15 @@ data _↝↝_ : Γ ⊢M[ ∅ ]⦂ Y → Γ ⊢M[ ∅ ]⦂ Y → Set where
                     M [ id-subst [ V ]s ]m
 
   let-return      : (V : Γ ⊢V⦂ X)
-                    (N : Γ ∷ X ⊢M[ ∅ ]⦂ Y) →
+                    (N : Γ ∷ X ⊢M⦂ Y) →
                     ----------------
                     let= return V `in N
                     ↝↝
                     N [ id-subst [ V ]s ]m
 
-  let-↑           : (N : Γ ∷ X ⊢M[ ∅ ]⦂ Y)
+  let-↑           : (N : Γ ∷ X ⊢M⦂ Y)
                     (V : Γ ⊢V⦂ ```(payload op))
-                    (M : Γ ⊢M[ ∅ ]⦂ X) →
+                    (M : Γ ⊢M⦂ X) →
                     ------------
                     let= ↑ op V M `in N
                     ↝↝
@@ -294,23 +299,23 @@ data _↝↝_ : Γ ⊢M[ ∅ ]⦂ Y → Γ ⊢M[ ∅ ]⦂ Y → Set where
 
   ↓-↑             : (V' : Γ ⊢V⦂ ```(payload op'))
                     (V : Γ ⊢V⦂ ```(payload op))
-                    (M : Γ ⊢M[ ∅ ]⦂ X) →
+                    (M : Γ ⊢M⦂ X) →
                     -------------------
                     ↓ op' V' (↑ op V M)
                     ↝↝
                     ↑ op V (↓ op' V' M)
 
-  let-promise     : (L : Γ ∷ Z ⊢M[ ∅ ]⦂ Y)
-                    (M : Γ ∷ ```(payload op) ⊢M[ re X ]⦂ ⟨ X ⟩)
-                    (N : Γ ∷ ⟨ X ⟩ ⊢M[ ∅ ]⦂ Z) →
+  let-promise     : (L : Γ ∷ Z ⊢M⦂ Y)
+                    (M : Γ ∷ ```(payload op) ∣ re X ⊢M⦂ ⟨ X ⟩)
+                    (N : Γ ∷ ⟨ X ⟩ ⊢M⦂ Z) →
                     --------------------------
                     let= promise op ↦ M `in N `in L
                     ↝↝
                     promise op ↦ M `in (let= N `in M-rename (wk₂ wk₁) L)
 
-  let-await       : (N : Γ ∷ Y ⊢M[ ∅ ]⦂ Z)
+  let-await       : (N : Γ ∷ Y ⊢M⦂ Z)
                     (V : Γ ⊢V⦂ ⟨ X ⟩)
-                    (M : Γ ∷ X ⊢M[ ∅ ]⦂ Y) →
+                    (M : Γ ∷ X ⊢M⦂ Y) →
                     ----------------
                     let= await V until M `in N
                     ↝↝
@@ -318,15 +323,15 @@ data _↝↝_ : Γ ⊢M[ ∅ ]⦂ Y → Γ ⊢M[ ∅ ]⦂ Y → Set where
 
   ↓-await         : (W : Γ ⊢V⦂ ```(payload op))
                     (V : Γ ⊢V⦂ ⟨ X ⟩)
-                    (M : Γ ∷ X ⊢M[ ∅ ]⦂ Y) →
+                    (M : Γ ∷ X ⊢M⦂ Y) →
                     ----------------
                     ↓ op W (await V until M)
                     ↝↝
                     await V until ↓ op (V-rename wk₁ W) M
 
   promise-↑       : (V : Γ ∷ ⟨ X ⟩ ⊢V⦂ ```(payload op'))
-                    (M : Γ ∷ ```(payload op) ⊢M[ re X ]⦂ ⟨ X ⟩)
-                    (N : Γ ∷ ⟨ X ⟩ ⊢M[ ∅ ]⦂ Y) →
+                    (M : Γ ∷ ```(payload op) ∣ re X ⊢M⦂ ⟨ X ⟩)
+                    (N : Γ ∷ ⟨ X ⟩ ⊢M⦂ Y) →
                     --------------------
                     promise op ↦ M `in (↑ op' V N)
                     ↝↝
@@ -340,8 +345,8 @@ data _↝↝_ : Γ ⊢M[ ∅ ]⦂ Y → Γ ⊢M[ ∅ ]⦂ Y → Set where
                     return W
 
   ↓-promise-op    : (V : Γ ⊢V⦂ ```(payload op))
-                    (M : Γ ∷ ```(payload op) ⊢M[ re X ]⦂ ⟨ X ⟩)
-                    (N : Γ ∷ ⟨ X ⟩ ⊢M[ ∅ ]⦂ Y) →
+                    (M : Γ ∷ ```(payload op) ∣ re X ⊢M⦂ ⟨ X ⟩)
+                    (N : Γ ∷ ⟨ X ⟩ ⊢M⦂ Y) →
                     -----------------------------
                     ↓ op V (promise op ↦ M `in N)
                     ↝↝
@@ -351,15 +356,15 @@ data _↝↝_ : Γ ⊢M[ ∅ ]⦂ Y → Γ ⊢M[ ∅ ]⦂ Y → Set where
 
   ↓-promise-op'   : (p : op ≢ op')
                     (V : Γ ⊢V⦂ ```(payload op'))
-                    (M : Γ ∷ ```(payload op) ⊢M[ re X ]⦂ ⟨ X ⟩)
-                    (N : Γ ∷ ⟨ X ⟩ ⊢M[ ∅ ]⦂ Y) →
+                    (M : Γ ∷ ```(payload op) ∣ re X ⊢M⦂ ⟨ X ⟩)
+                    (N : Γ ∷ ⟨ X ⟩ ⊢M⦂ Y) →
                     -------------------------------
                     ↓ op' V (promise op ↦ M `in N)
                     ↝↝
                     promise op ↦ M `in ↓ op' (V-rename wk₁ V) N
 
   await-promise   : (V : Γ ⊢V⦂ X)
-                    (M : Γ ∷ X ⊢M[ ∅ ]⦂ Y) →
+                    (M : Γ ∷ X ⊢M⦂ Y) →
                     ----------------
                     await ⟨ V ⟩ until M
                     ↝↝
@@ -373,7 +378,7 @@ data _↝↝_ : Γ ⊢M[ ∅ ]⦂ Y → Γ ⊢M[ ∅ ]⦂ Y → Set where
                     ↝↝
                     ↑ op V N'
 
-  context-promise : {M : Γ ∷ ```(payload op) ⊢M[ re X ]⦂ ⟨ X ⟩} →
+  context-promise : {M : Γ ∷ ```(payload op) ∣ re X ⊢M⦂ ⟨ X ⟩} →
                     N ↝↝ N' →
                     -----
                     promise op ↦ M `in N

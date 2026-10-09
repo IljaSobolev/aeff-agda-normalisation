@@ -17,25 +17,25 @@ open import Function using (_∘_)
 module AEffReinstCtxSN.AEffReinstCtxBaseSN.Main where
 
 private variable
-  R : Γ ⊢M[ ∅ ]⦂ X
+  R : Γ ⊢M⦂ X
 
 
 -- DEFINITION OF KRIPKE-STYLE LOGICAL RELATION
 
 VRed : Γ ⊢V⦂ X → Set
 
-CRed : Γ ⊢M[ ∅ ]⦂ X → Set
+CRed : Γ ⊢M⦂ X → Set
 
 KRed : Γ ⊢K⦂ X ⊸ Y [ n ] → Set
 
-ARed : Γ ⊢K⦂ Y ⊸ Z [ n ] → Γ ∷ X ⊢M[ ∅ ]⦂ Y → Set
+ARed : Γ ⊢K⦂ Y ⊸ Z [ n ] → Γ ∷ X ⊢M⦂ Y → Set
 
 VRed {Γ} {``` _} V =
   ⊤
 VRed {Γ} {X ⇒ Y} V =
   {Γ' : Ctx} {r : Ren Γ Γ'} {W : Γ' ⊢V⦂ X} → VRed W → CRed (V-rename r V · W)
 VRed {Γ} {⟨ X ⟩} V =
-  {Γ' : Ctx} {r : Ren Γ Γ'} {Y Z : Type} {n : ℕ} (K : Γ' ⊢K⦂ Y ⊸ Z [ n ]) (N : Γ' ∷ X ⊢M[ ∅ ]⦂ Y) → ARed K N → SN' (K aₖ await V-rename r V until N)
+  {Γ' : Ctx} {r : Ren Γ Γ'} {Y Z : Type} {n : ℕ} (K : Γ' ⊢K⦂ Y ⊸ Z [ n ]) (N : Γ' ∷ X ⊢M⦂ Y) → ARed K N → SN' (K aₖ await V-rename r V until N)
 
 CRed {Γ} {X} M =
   {Γ' : Ctx} {r : Ren Γ Γ'} {Y : Type} {n : ℕ} (K : Γ' ⊢K⦂ X ⊸ Y [ n ]) → KRed K → SN' (K aₖ M-rename r M)
@@ -51,20 +51,20 @@ ARed {Γ} {Y} {Z} {n} {X} K N =
 -- reinstall BEHAVES LIKE A SECOND-CLASS JUMP TO R, WHICH IS ONLY REQUIRED TO BE
 -- STRONGLY NORMALISING UNDER THE CONTINUATION K
 
-CRedR : Γ ⊢M[ re X ]⦂ ⟨ X ⟩ → Set
+CRedR : Γ ∣ re X ⊢M⦂ ⟨ X ⟩ → Set
 CRedR {Γ} {X} M =
   {Γ' : Ctx} {r : Ren Γ Γ'} {Z : Type} {n : ℕ} (K : Γ' ⊢K⦂ ⟨ X ⟩ ⊸ Z [ n ]) → KRed K →
-  (R : Γ' ⊢M[ ∅ ]⦂ ⟨ X ⟩) → SN (K aₖ R) → SN' (K aₖ M-rename r M [ R ]r)
+  (R : Γ' ⊢M⦂ ⟨ X ⟩) → SN (K aₖ R) → SN' (K aₖ M-rename r M [ R ]r)
 
 
 -- AUXILIARY PREDICATES EXPRESSING THAT ALL ONE-VARIABLE SUBSTITUTIONS OF
 -- REDUCIBLE COMPUTATIONS WITH REDUCIBLE VALUES RESULTS IN REDUCIBLE COMPUTATIONS
 
-CRedSub' : Γ ∷ X ⊢M[ ∅ ]⦂ Y → Set
+CRedSub' : Γ ∷ X ⊢M⦂ Y → Set
 CRedSub' {Γ} {X} M =
   {Γ' : Ctx} {r : Ren Γ Γ'} {V : Γ' ⊢V⦂ X} → VRed V → CRed (M-rename (wk₂ r) M [ id-subst [ V ]s ]m)
 
-CRedSubR' : Γ ∷ Y ⊢M[ re X ]⦂ ⟨ X ⟩ → Set
+CRedSubR' : Γ ∷ Y ∣ re X ⊢M⦂ ⟨ X ⟩ → Set
 CRedSubR' {Γ = Γ} {Y = Y} M =
   {Γ' : Ctx} {r : Ren Γ Γ'} {V : Γ' ⊢V⦂ Y} → VRed V → CRedR (M-rename (wk₂ r) M [ id-subst [ V ]s ]m)
 
@@ -227,7 +227,7 @@ sn-k-↑-e K (sn sM) r with aₖ→`aₖ K r
 ... | ↝∘l K r = sn-k-↑-e K (sM (context-K K (let-↑ _ _ _))) (context-K K r)
 ... | ↝∘↓ K r = sn-k-↑-e K (sM (context-K K (↓-↑ _ _ _))) (context-K K r)
 
-sni-k-↑-e' : (K : Γ ⊢K⦂ Y ⊸ Z [ k ]) → SNi (K aₖ ↑ op V M) (suc n) → {L : Γ ⊢M[ ∅ ]⦂ Z} → K aₖ M ↝↝ L → SNi L n
+sni-k-↑-e' : (K : Γ ⊢K⦂ Y ⊸ Z [ k ]) → SNi (K aₖ ↑ op V M) (suc n) → {L : Γ ⊢M⦂ Z} → K aₖ M ↝↝ L → SNi L n
 
 sni-k-↑-e : (K : Γ ⊢K⦂ Y ⊸ Z [ k ]) → SNi (K aₖ ↑ op V M) n → SNi (K aₖ M) n
 
@@ -342,7 +342,7 @@ sn-promise : (K : Γ ⊢K⦂ Y ⊸ Z [ k ]) →
              CRedSubR' M →
              SNi (K-rename wk₁ K aₖ N) n →
              -----------------------------------
-             {L : Γ ⊢M[ ∅ ]⦂ Z} → K `aₖ promise op ↦ M `in N ↝↝ L → SN L
+             {L : Γ ⊢M⦂ Z} → K `aₖ promise op ↦ M `in N ↝↝ L → SN L
 
 sn-promise K rK rM (sn h) (↝id (promise-↑ _ _ _)) =
   sn'→sn (sn-↑ K (sn'→sn (λ r → sn-promise K (kred-↑ K rK) rM (sni-k-↑-e id (sn h)) (aₖ→`aₖ K r))))
@@ -400,10 +400,10 @@ credr-let rM rN K rK R sR = rM (K ∘l _) (kred-let-r K rK (credsubr'-r rN) sR)
 credr-↑ : CRedR M → CRedR (↑ op V M)
 credr-↑ rM K rK R sR = sn-↑ K (sn'→sn (rM K rK R sR))
 
-credr-↓ : {M : Γ ⊢M[ ∅ ]⦂ ⟨ X ⟩} → CRed M → CRedR {X = X} (↓ op V M)
+credr-↓ : {M : Γ ⊢M⦂ ⟨ X ⟩} → CRed M → CRedR {X = X} (↓ op V M)
 credr-↓ rM K rK R sR = cred-↓ rM K rK
 
-credr-await : {V : Γ ⊢V⦂ ⟨ Y ⟩} {N : Γ ∷ Y ⊢M[ re X ]⦂ ⟨ X ⟩} → VRed V → CRedSubR' N → CRedR (await V until N)
+credr-await : {V : Γ ⊢V⦂ ⟨ Y ⟩} {N : Γ ∷ Y ∣ re X ⊢M⦂ ⟨ X ⟩} → VRed V → CRedSubR' N → CRedR (await V until N)
 credr-await rV rN K rK R sR = rV K _ (ared-await-r K rK (credsubr'-r rN) sR)
 
 credr-promise : CRedSubR' M → CRedSubR' N → CRedR (promise op ↦ M `in N)
@@ -429,10 +429,10 @@ SubRed {Γ} s = {X : Type} (x : X ∈ Γ) → VRed (s x)
 VRedSub : Γ ⊢V⦂ X → Set
 VRedSub {Γ} V = {Γ' : Ctx} {s : Sub Γ Γ'} → SubRed s → VRed (V [ s ]v)
 
-CRedSub : Γ ⊢M[ ∅ ]⦂ X → Set
+CRedSub : Γ ⊢M⦂ X → Set
 CRedSub {Γ} M = {Γ' : Ctx} {s : Sub Γ Γ'} → SubRed s → CRed (M [ s ]m)
 
-CRedSubR : Γ ⊢M[ re X ]⦂ ⟨ X ⟩ → Set
+CRedSubR : Γ ∣ re X ⊢M⦂ ⟨ X ⟩ → Set
 CRedSubR {Γ} M = {Γ' : Ctx} {s : Sub Γ Γ'} → SubRed s → CRedR (M [ s ]m)
 
 
@@ -445,7 +445,7 @@ subred-[]s : SubRed s → VRed V → SubRed (s [ V ]s)
 subred-[]s rs rV Hd = rV
 subred-[]s rs rV (Tl x) = rs x
 
-lift-⨟-eq : (M : Γ ∷ X ⊢M[ ρ ]⦂ Y) (s : Sub Γ Γ') (r : Ren Γ' Γ'') (V : Γ'' ⊢V⦂ X) →
+lift-⨟-eq : (M : Γ ∷ X ∣ ρ ⊢M⦂ Y) (s : Sub Γ Γ') (r : Ren Γ' Γ'') (V : Γ'' ⊢V⦂ X) →
             M [ (s ⨟ ren r) [ V ]s ]m
             ≡
             M-rename (wk₂ r) (M [ lift s ]m) [ id-subst [ V ]s ]m
@@ -476,9 +476,9 @@ credr-⨟ {s = s} {M = M} rs rM {r = r} {V = V} rV K rK R sR =
 
 fund-v : (V : Γ ⊢V⦂ X) → VRedSub V
 
-fund-m : (M : Γ ⊢M[ ∅ ]⦂ X) → CRedSub M
+fund-m : (M : Γ ⊢M⦂ X) → CRedSub M
 
-fund-mr : (M : Γ ⊢M[ re X ]⦂ ⟨ X ⟩) → CRedSubR M
+fund-mr : (M : Γ ∣ re X ⊢M⦂ ⟨ X ⟩) → CRedSubR M
 
 fund-v (` x) rs = rs x
 fund-v (`` c) rs = tt
@@ -505,8 +505,8 @@ fund-mr (↓ op V M) rs = credr-↓ (fund-m M rs)
 
 -- ALL TERMS ARE REDUCIBLE AND STRONGLY NORMALISING
 
-all-terms-red : (M : Γ ⊢M[ ∅ ]⦂ X) → CRed M
+all-terms-red : (M : Γ ⊢M⦂ X) → CRed M
 all-terms-red M rewrite sym (sub-id-m {M = M}) = fund-m M vred-var
 
-strong-norm : (M : Γ ⊢M[ ∅ ]⦂ X) → SN M
+strong-norm : (M : Γ ⊢M⦂ X) → SN M
 strong-norm M = sn'→sn (cred→sn (all-terms-red M))

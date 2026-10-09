@@ -246,7 +246,7 @@ wk₁V[id-subst[W]] V W =
     V-rename wk₁ V [ id-subst [ W ]s ]v
   ∎
 
-wk₂wk₁M[liftid-subst[W]] : (M : Γ ∷ Z ⊢M[ ρ ]⦂ X) (W : Γ ⊢V⦂ Y) →
+wk₂wk₁M[liftid-subst[W]] : (M : Γ ∷ Z ∣ ρ ⊢M⦂ X) (W : Γ ⊢V⦂ Y) →
                            ---------------------------
                            M
                            ≡
@@ -263,7 +263,7 @@ wk₂wk₁M[liftid-subst[W]] M W =
     M-rename (wk₂ wk₁) M [ lift (id-subst [ W ]s) ]m
   ∎
 
-M[lifts][id-subst[V]] : (M : Γ ∷ X ⊢M[ ρ ]⦂ Y) (V : Γ' ⊢V⦂ X) →
+M[lifts][id-subst[V]] : (M : Γ ∷ X ∣ ρ ⊢M⦂ Y) (V : Γ' ⊢V⦂ X) →
                         -----------------------------
                         M [ s [ V ]s ]m
                         ≡
@@ -278,7 +278,7 @@ M[lifts][id-subst[V]] {s = s} M V =
     M [ lift s ]m [ id-subst [ V ]s ]m
   ∎
 
-M[id-subst[V]][s] : (s : Sub Γ Γ') (M : Γ ∷ X ⊢M[ ρ ]⦂ Y) (V : Γ ⊢V⦂ X) →
+M[id-subst[V]][s] : (s : Sub Γ Γ') (M : Γ ∷ X ∣ ρ ⊢M⦂ Y) (V : Γ ⊢V⦂ X) →
                     -----------------------
                     M [ id-subst [ V ]s ]m [ s ]m
                     ≡
@@ -303,7 +303,7 @@ wk₁[V[s]] : (Z : Type) (s : Sub Γ Γ') (V : Γ ⊢V⦂ X) →
 
 wk₁[V[s]] _ _ V = sub-ren-v {V = V} (λ _ → refl)
 
-wk₁[M[s]] : (Z : Type) (s : Sub Γ Γ') (M : Γ ⊢M[ ρ ]⦂ X) →
+wk₁[M[s]] : (Z : Type) (s : Sub Γ Γ') (M : Γ ∣ ρ ⊢M⦂ X) →
             ---------------------------------
             M-rename (wk₁ {X = Z}) M [ lift s ]m
             ≡
@@ -311,7 +311,7 @@ wk₁[M[s]] : (Z : Type) (s : Sub Γ Γ') (M : Γ ⊢M[ ρ ]⦂ X) →
 
 wk₁[M[s]] _ _ M = sub-ren-m {M = M} (λ _ → refl)
 
-wk₂wk₁[M[lifts]] : (Z : Type) (s : Sub Γ Γ') (M : Γ ∷ X ⊢M[ ρ ]⦂ Y) →
+wk₂wk₁[M[lifts]] : (Z : Type) (s : Sub Γ Γ') (M : Γ ∷ X ∣ ρ ⊢M⦂ Y) →
                    ----------------------------------------------
                    M-rename (wk₂ (wk₁ {X = Z})) M [ lift (lift s) ]m
                    ≡
@@ -365,7 +365,7 @@ ren-strengthenV r (`` c) = refl
 
 -- REINSTALL SUBSTITUTION COMMUTES WITH RENAMINGS AND SUBSTITUTIONS
 
-wk₁M[id-subst[W]] : (M : Γ ⊢M[ ρ ]⦂ X) (W : Γ ⊢V⦂ Y) →
+wk₁M[id-subst[W]] : (M : Γ ∣ ρ ⊢M⦂ X) (W : Γ ⊢V⦂ Y) →
                     ---------------------------
                     M
                     ≡
@@ -382,13 +382,13 @@ wk₁M[id-subst[W]] M W =
     M-rename wk₁ M [ id-subst [ W ]s ]m
   ∎
 
-ren-[]r : (r : Ren Γ Γ') (M : Γ ⊢M[ re X ]⦂ Y) (R : Γ ⊢M[ ∅ ]⦂ ⟨ X ⟩) →
+ren-[]r : (r : Ren Γ Γ') (M : Γ ∣ re X ⊢M⦂ Y) (R : Γ ⊢M⦂ ⟨ X ⟩) →
           ----------------------------------------------
           M-rename r (M [ R ]r)
           ≡
           M-rename r M [ M-rename r R ]r
 
-ren-[]r-wk : (r : Ren Γ Γ') (M : Γ ∷ Z ⊢M[ re X ]⦂ Y) (R : Γ ⊢M[ ∅ ]⦂ ⟨ X ⟩) →
+ren-[]r-wk : (r : Ren Γ Γ') (M : Γ ∷ Z ∣ re X ⊢M⦂ Y) (R : Γ ⊢M⦂ ⟨ X ⟩) →
              M-rename (wk₂ r) (M [ M-rename wk₁ R ]r)
              ≡
              M-rename (wk₂ r) M [ M-rename wk₁ (M-rename r R) ]r
@@ -404,13 +404,13 @@ ren-[]r r (↓ op V M) R = refl
 ren-[]r r (promise op ↦ M `in N) R = cong (promise op ↦ _ `in_) (ren-[]r-wk r N R)
 ren-[]r r (await V until M) R = cong (await _ until_) (ren-[]r-wk r M R)
 
-sub-[]r : (s : Sub Γ Γ') (M : Γ ⊢M[ re X ]⦂ Y) (R : Γ ⊢M[ ∅ ]⦂ ⟨ X ⟩) →
+sub-[]r : (s : Sub Γ Γ') (M : Γ ∣ re X ⊢M⦂ Y) (R : Γ ⊢M⦂ ⟨ X ⟩) →
           ----------------------------------------------
           M [ R ]r [ s ]m
           ≡
           M [ s ]m [ R [ s ]m ]r
 
-sub-[]r-wk : (s : Sub Γ Γ') (M : Γ ∷ Z ⊢M[ re X ]⦂ Y) (R : Γ ⊢M[ ∅ ]⦂ ⟨ X ⟩) →
+sub-[]r-wk : (s : Sub Γ Γ') (M : Γ ∷ Z ∣ re X ⊢M⦂ Y) (R : Γ ⊢M⦂ ⟨ X ⟩) →
              M [ M-rename wk₁ R ]r [ lift s ]m
              ≡
              M [ lift s ]m [ M-rename wk₁ (R [ s ]m) ]r
@@ -428,7 +428,7 @@ sub-[]r s (await V until M) R = cong (await _ until_) (sub-[]r-wk s M R)
 
 -- REINSTALL SUBSTITUTION UNDER A BINDER, FOLLOWED BY A RENAMING AND A VALUE SUBSTITUTION
 
-[]r-wk-ren-sub : (r : Ren Γ Γ') (N : Γ ∷ Z ⊢M[ re X ]⦂ Y) (R : Γ ⊢M[ ∅ ]⦂ ⟨ X ⟩) (V : Γ' ⊢V⦂ Z) →
+[]r-wk-ren-sub : (r : Ren Γ Γ') (N : Γ ∷ Z ∣ re X ⊢M⦂ Y) (R : Γ ⊢M⦂ ⟨ X ⟩) (V : Γ' ⊢V⦂ Z) →
                  ---------------------------------------------------------------
                  M-rename (wk₂ r) (N [ M-rename wk₁ R ]r) [ id-subst [ V ]s ]m
                  ≡

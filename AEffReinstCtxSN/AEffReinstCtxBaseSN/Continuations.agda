@@ -26,7 +26,7 @@ data _⊢K⦂_⊸_[_] (Γ : Ctx) (X : Type) : Type → ℕ → Set where
             Γ ⊢K⦂ X ⊸ X [ 0 ]
 
   _∘l_    : Γ ⊢K⦂ Y ⊸ Z [ n ] →
-            Γ ∷ X ⊢M[ ∅ ]⦂ Y →
+            Γ ∷ X ⊢M⦂ Y →
             -----------------
             Γ ⊢K⦂ X ⊸ Z [ n ]
 
@@ -40,7 +40,7 @@ data _⊢K⦂_⊸_[_] (Γ : Ctx) (X : Type) : Type → ℕ → Set where
 -- ACTION OF CONTINUATIONS ON TERMS
 
 infix 12 _aₖ_
-_aₖ_ : Γ ⊢K⦂ X ⊸ Y [ n ] → Γ ⊢M[ ∅ ]⦂ X → Γ ⊢M[ ∅ ]⦂ Y
+_aₖ_ : Γ ⊢K⦂ X ⊸ Y [ n ] → Γ ⊢M⦂ X → Γ ⊢M⦂ Y
 id aₖ M = M
 K ∘l N aₖ M = K aₖ let= M `in N
 K ∘↓ op [ V ] aₖ M = K aₖ ↓ op V M
@@ -50,7 +50,7 @@ K ∘↓ op [ V ] aₖ M = K aₖ ↓ op V M
 -- AND PROOF OF ITS CORRECTNESS
 
 infix 10 _`aₖ_↝↝_
-data _`aₖ_↝↝_ : Γ ⊢K⦂ X ⊸ Y [ n ] → Γ ⊢M[ ∅ ]⦂ X → Γ ⊢M[ ∅ ]⦂ Y → Set where
+data _`aₖ_↝↝_ : Γ ⊢K⦂ X ⊸ Y [ n ] → Γ ⊢M⦂ X → Γ ⊢M⦂ Y → Set where
 
   ↝id : M ↝↝ M' →
         ----------------------

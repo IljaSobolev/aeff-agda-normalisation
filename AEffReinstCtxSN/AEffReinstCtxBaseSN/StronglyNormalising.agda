@@ -27,10 +27,10 @@ variable
 
 -- EACH TERM CAN ONLY HAVE FINITELY MANY REDUCTS
 
-data Reduct (M : Γ ⊢M[ ∅ ]⦂ X) : Set where
+data Reduct (M : Γ ⊢M⦂ X) : Set where
   r↝ : M ↝↝ N → Reduct M
 
-reducts-base : (M : Γ ⊢M[ ∅ ]⦂ X) → List (Reduct M)
+reducts-base : (M : Γ ⊢M⦂ X) → List (Reduct M)
 
 reducts-base (ƛ _ · _) = [ r↝ (apply _ _) ]ₗ
 reducts-base (await ⟨ _ ⟩ until _) = [ r↝ (await-promise _ _) ]ₗ
@@ -59,7 +59,7 @@ ctx-promise (r↝ r) = r↝ (context-promise r)
 ctx-let : Reduct M → Reduct (let= M `in N)
 ctx-let (r↝ r) = r↝ (context-let r)
 
-reducts-ctx : (M : Γ ⊢M[ ∅ ]⦂ X) → List (Reduct M)
+reducts-ctx : (M : Γ ⊢M⦂ X) → List (Reduct M)
 
 reducts-ctx (return _) = []ₗ
 reducts-ctx (_ · _) = []ₗ
@@ -92,7 +92,7 @@ reducts-complete' (r↝ (context-promise r)) = inj₂ (map-∈ₗ (++-∈ₗ (re
 reducts-complete' (r↝ (context-let r)) = inj₂ (map-∈ₗ (++-∈ₗ (reducts-complete' (r↝ r))))
 reducts-complete' (r↝ (context-↓ r)) = inj₂ (map-∈ₗ (++-∈ₗ (reducts-complete' (r↝ r))))
 
-reducts : (M : Γ ⊢M[ ∅ ]⦂ X) → List (Reduct M)
+reducts : (M : Γ ⊢M⦂ X) → List (Reduct M)
 reducts M = reducts-base M ++ₗ reducts-ctx M
 
 reducts-complete : (R : Reduct M) → R ∈ₗ reducts M
@@ -101,11 +101,11 @@ reducts-complete R = ++-∈ₗ (reducts-complete' R)
 
 -- STRONG NORMALISATION PREDICATE
 
-data SN (M : Γ ⊢M[ ∅ ]⦂ X) : Set where
-  sn : ({N : Γ ⊢M[ ∅ ]⦂ X} → M ↝↝ N → SN N) → SN M
+data SN (M : Γ ⊢M⦂ X) : Set where
+  sn : ({N : Γ ⊢M⦂ X} → M ↝↝ N → SN N) → SN M
 
-SN' : (M : Γ ⊢M[ ∅ ]⦂ X) → Set
-SN' {Γ} {X} M = {N : Γ ⊢M[ ∅ ]⦂ X} → M ↝↝ N → SN N
+SN' : (M : Γ ⊢M⦂ X) → Set
+SN' {Γ} {X} M = {N : Γ ⊢M⦂ X} → M ↝↝ N → SN N
 
 sn'→sn : SN' M → SN M
 sn'→sn s = sn s
@@ -126,8 +126,8 @@ ren-sn s = sn'→sn (ren-sn' s)
 
 -- STRONG NORMALISATION PREDICATE INDEXED BY MAXIMUM REDUCTION LENGTH
 
-data SNi (M : Γ ⊢M[ ∅ ]⦂ X) : ℕ → Set where
-  sn : ({N : Γ ⊢M[ ∅ ]⦂ X} → M ↝↝ N → SNi N n) → SNi M (suc n)
+data SNi (M : Γ ⊢M⦂ X) : ℕ → Set where
+  sn : ({N : Γ ⊢M⦂ X} → M ↝↝ N → SNi N n) → SNi M (suc n)
 
 max : SN M → ℕ
 max (sn sM) = suc (foldrₗ _⊔_ 0 (mapₗ (λ {(r↝ r) → max (sM r)}) (reducts _)))
@@ -144,12 +144,12 @@ sni→sn (sn sM) = sn (λ r → sni→sn (sM r))
 
 -- STRONG NORMALISATION PREDICATE INDEXED BY MAXIMUM NUMBER OF OUTGOING SIGNALS
 
-#↑ : Γ ⊢M[ ∅ ]⦂ X → ℕ
+#↑ : Γ ⊢M⦂ X → ℕ
 #↑ (↑ _ _ M) = suc (#↑ M)
 #↑ _ = 0
 
-data SN↑ (M : Γ ⊢M[ ∅ ]⦂ X) (n : ℕ) : Set where
-  sn : ({N : Γ ⊢M[ ∅ ]⦂ X} → M ↝↝ N → SN↑ N n) → #↑ M ≤ n → SN↑ M n
+data SN↑ (M : Γ ⊢M⦂ X) (n : ℕ) : Set where
+  sn : ({N : Γ ⊢M⦂ X} → M ↝↝ N → SN↑ N n) → #↑ M ≤ n → SN↑ M n
 
 max↑ : SN M → ℕ
 max↑ {M = M} (sn sM) = #↑ M ⊔ foldrₗ _⊔_ 0 (mapₗ (λ {(r↝ r) → max↑ (sM r)}) (reducts _))
