@@ -292,7 +292,7 @@ when checking that the expression reinstall has type
 
 
 -- THE CLOSEST LEGAL ANALOGUE OF THE FIRST COUNTEREXAMPLE, IN WHICH THE ↓ IS IN A let-BOUND
--- POSITION AND reinstall IS IN TAIL POSITION:
+-- POSITION AND reinstall IS NOT UNDER THE ↓:
 -- ↓ op (x₀ , promise (op x ↦ let _ = ↓ op (x , return x) in reinstall) as p in return p)
 
 M₁'-code : {Γ : Ctx}

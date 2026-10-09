@@ -66,7 +66,7 @@
 
     - `Simulation.agda` - proof that AEffReinstBase simulates AEff and that the sequential part of AEffReinst is strongly normalising
 
-- `AEffReinstCtxSN/` - variant of reinstallable interrupt handlers without sum and unit types: computations carry a reinstall context (`Γ ∣ ∅ ⊢M⦂ Y` outside handler code, `Γ ∣ re X ⊢M⦂ Y` inside the code of a handler for promises of type `⟨ X ⟩`), and handler code may call `reinstall` in tail and let-bound positions (possibly several times, using the returned promise), but not under `↓` or `ƛ`
+- `AEffReinstCtxSN/` - variant of reinstallable interrupt handlers without sum and unit types: computations carry a reinstall context (`Γ ∣ ∅ ⊢M⦂ Y` outside handler code, `Γ ∣ re X ⊢M⦂ Y` inside the code of a handler for promises of type `⟨ X ⟩`), and handler code may call `reinstall` (possibly several times, using the returned promise) anywhere except under interrupts (`↓`) or in function bodies (`ƛ`)
 
     - `AEffReinstCtxBaseSN/` - definition of this calculus (with reinstall substitution and the corresponding trigger rule), its substitution properties, continuations, and the proof of strong normalisation for it
 
