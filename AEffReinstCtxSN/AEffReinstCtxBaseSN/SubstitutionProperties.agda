@@ -398,7 +398,7 @@ ren-[]r-wk r M R = trans (ren-[]r (wk₂ r) M _) (cong (M-rename (wk₂ r) M [_]
 ren-[]r r (return V) R = refl
 ren-[]r r (V · W) R = refl
 ren-[]r r reinstall R = refl
-ren-[]r r (let= M `in N) R = cong (let= _ `in_) (ren-[]r-wk r N R)
+ren-[]r r (let= M `in N) R = cong₂ let=_`in_ (ren-[]r r M R) (ren-[]r-wk r N R)
 ren-[]r r (↑ op V M) R = cong (↑ op _) (ren-[]r r M R)
 ren-[]r r (↓ op V M) R = refl
 ren-[]r r (promise op ↦ M `in N) R = cong (promise op ↦ _ `in_) (ren-[]r-wk r N R)
@@ -420,7 +420,7 @@ sub-[]r-wk s M R = trans (sub-[]r (lift s) M _) (cong (M [ lift s ]m [_]r) (wk�
 sub-[]r s (return V) R = refl
 sub-[]r s (V · W) R = refl
 sub-[]r s reinstall R = refl
-sub-[]r s (let= M `in N) R = cong (let= _ `in_) (sub-[]r-wk s N R)
+sub-[]r s (let= M `in N) R = cong₂ let=_`in_ (sub-[]r s M R) (sub-[]r-wk s N R)
 sub-[]r s (↑ op V M) R = cong (↑ op _) (sub-[]r s M R)
 sub-[]r s (↓ op V M) R = refl
 sub-[]r s (promise op ↦ M `in N) R = cong (promise op ↦ _ `in_) (sub-[]r-wk s N R)

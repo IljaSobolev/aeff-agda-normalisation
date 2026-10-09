@@ -6,8 +6,11 @@ open import AEffReinstCtxSN.AEffReinstCtxBaseSN.SubstitutionProperties
 open import AEffReinstCtxSN.AEffReinstCtxBaseSN.Continuations
 
 open import Data.Unit using (⊤; tt)
-open import Data.Nat using (ℕ; zero; suc; _≤_; z≤n; s≤s)
-open import Data.Nat.Properties using (n≤1+n)
+open import Data.Nat using (ℕ; zero; suc; _≤_; _<_; z≤n; s≤s)
+open import Data.Nat.Properties using (n≤1+n; ≤-refl)
+open import Data.Nat.Induction using (<-wellFounded)
+
+open import Induction.WellFounded using (Acc; acc)
 
 open import Relation.Binary.PropositionalEquality using (_≡_; refl; sym; trans; cong; cong₂; subst; subst₂) renaming (module ≡-Reasoning to Eq)
 open Eq using (begin_; step-≡-⟩; _∎)
@@ -47,14 +50,24 @@ ARed {Γ} {Y} {Z} {n} {X} K N =
   {Γ' : Ctx} {r : Ren Γ Γ'} {V : Γ' ⊢V⦂ X} → VRed V → SN' (K-rename r K aₖ await ⟨ V ⟩ until M-rename (wk₂ r) N)
 
 
--- REDUCIBILITY OF COMPUTATIONS IN REINSTALL CONTEXT re X (I.E., OF HANDLER CODE):
--- reinstall BEHAVES LIKE A SECOND-CLASS JUMP TO R, WHICH IS ONLY REQUIRED TO BE
--- STRONGLY NORMALISING UNDER THE CONTINUATION K
+-- COMPUTATIONS THAT ARE STRONGLY NORMALISING UNDER EVERY REDUCIBLE CONTINUATION
+-- WITH AT MOST n INTERRUPT FRAMES (AND UNDER EVERY RENAMING)
 
-CRedR : Γ ∣ re X ⊢M⦂ ⟨ X ⟩ → Set
-CRedR {Γ} {X} M =
-  {Γ' : Ctx} {r : Ren Γ Γ'} {Z : Type} {n : ℕ} (K : Γ' ⊢K⦂ ⟨ X ⟩ ⊸ Z [ n ]) → KRed K →
-  (R : Γ' ⊢M⦂ ⟨ X ⟩) → SN (K aₖ R) → SN' (K aₖ M-rename r M [ R ]r)
+GoodR : ℕ → Γ ⊢M⦂ ⟨ X ⟩ → Set
+GoodR {Γ} {X} n R =
+  {Γ' : Ctx} {r : Ren Γ Γ'} {U : Type} {m : ℕ} → m ≤ n →
+  (L : Γ' ⊢K⦂ ⟨ X ⟩ ⊸ U [ m ]) → KRed L → SN (L aₖ M-rename r R)
+
+
+-- REDUCIBILITY OF COMPUTATIONS IN REINSTALL CONTEXT re X (I.E., OF HANDLER CODE):
+-- reinstall BEHAVES LIKE A SECOND-CLASS JUMP TO R, WHICH IS REQUIRED TO BE
+-- STRONGLY NORMALISING UNDER EVERY REDUCIBLE CONTINUATION WITH AT MOST AS MANY
+-- INTERRUPT FRAMES AS THE CONTINUATION K
+
+CRedR : Γ ∣ re X ⊢M⦂ Y → Set
+CRedR {Γ} {X} {Y} M =
+  {Γ' : Ctx} {r : Ren Γ Γ'} {Z : Type} {n : ℕ} (K : Γ' ⊢K⦂ Y ⊸ Z [ n ]) → KRed K →
+  (R : Γ' ⊢M⦂ ⟨ X ⟩) → GoodR n R → SN' (K aₖ M-rename r M [ R ]r)
 
 
 -- AUXILIARY PREDICATES EXPRESSING THAT ALL ONE-VARIABLE SUBSTITUTIONS OF
@@ -64,7 +77,7 @@ CRedSub' : Γ ∷ X ⊢M⦂ Y → Set
 CRedSub' {Γ} {X} M =
   {Γ' : Ctx} {r : Ren Γ Γ'} {V : Γ' ⊢V⦂ X} → VRed V → CRed (M-rename (wk₂ r) M [ id-subst [ V ]s ]m)
 
-CRedSubR' : Γ ∷ Y ∣ re X ⊢M⦂ ⟨ X ⟩ → Set
+CRedSubR' : Γ ∷ Y ∣ re X ⊢M⦂ U → Set
 CRedSubR' {Γ = Γ} {Y = Y} M =
   {Γ' : Ctx} {r : Ren Γ Γ'} {V : Γ' ⊢V⦂ Y} → VRed V → CRedR (M-rename (wk₂ r) M [ id-subst [ V ]s ]m)
 
@@ -83,13 +96,10 @@ credsub'-r : CRedSub' M → CRedSub' (M-rename (wk₂ r) M)
 credsub'-r rM rV K rK = subst (λ z → SN' (K aₖ M-rename _ (z [ id-subst [ _ ]s ]m))) (sym ren-ren-l) (rM rV K rK)
 
 credsubr'-r : CRedSubR' M → CRedSubR' (M-rename (wk₂ r) M)
-credsubr'-r rM rV K rK R sR = subst (λ z → SN' (K aₖ M-rename _ (z [ id-subst [ _ ]s ]m) [ R ]r)) (sym ren-ren-l) (rM rV K rK R sR)
+credsubr'-r rM rV K rK R gR = subst (λ z → SN' (K aₖ M-rename _ (z [ id-subst [ _ ]s ]m) [ R ]r)) (sym ren-ren-l) (rM rV K rK R gR)
 
-
--- STRONG NORMALISATION OF A CONTINUATION APPLIED TO A COMPUTATION IS PRESERVED UNDER RENAMINGS
-
-sn-ren-aₖ : (K : Γ ⊢K⦂ X ⊸ Y [ n ]) → SN (K aₖ M) → SN (K-rename r K aₖ M-rename r M)
-sn-ren-aₖ K s = subst SN (ren-aₖ K) (ren-sn s)
+goodr-r : GoodR n R → GoodR n (M-rename r R)
+goodr-r gR p L rL = subst (λ z → SN (L aₖ z)) (sym ren-ren-m) (gR p L rL)
 
 
 -- REDUCIBLE CONTINUATIONS APPLIED TO REDUCIBLE COMPUTATIONS RESULT IN STRONGLY NORMALISING TERMS
@@ -97,8 +107,8 @@ sn-ren-aₖ K s = subst SN (ren-aₖ K) (ren-sn s)
 cred-kred : (K : Γ ⊢K⦂ X ⊸ Y [ n ]) → KRed K → CRed M → SN' (K aₖ M)
 cred-kred K rK rM = subst (λ z → SN' (K aₖ z)) ren-id-m (rM K rK)
 
-credr-kred : (K : Γ ⊢K⦂ ⟨ X ⟩ ⊸ Y [ n ]) → KRed K → CRedR M → SN (K aₖ R) → SN' (K aₖ M [ R ]r)
-credr-kred {M = M} {R = R} K rK rM sR = subst (λ z → SN' (K aₖ z [ R ]r)) (ren-id-m {M = M}) (rM {r = id-ren} K rK R sR)
+credr-kred : (K : Γ ⊢K⦂ Y ⊸ Z [ n ]) → KRed K → CRedR M → GoodR n R → SN' (K aₖ M [ R ]r)
+credr-kred {M = M} {R = R} K rK rM gR = subst (λ z → SN' (K aₖ z [ R ]r)) (ren-id-m {M = M}) (rM {r = id-ren} K rK R gR)
 
 
 -- PROOFS OF THE REDUCIBILITY LEMMAS FOR EACH TERM CONSTRUCTOR
@@ -308,51 +318,54 @@ kred-↑ K rK rV =
 -- CONTINUATIONS AND AWAITING CONTINUATIONS WHOSE BODY HAS BEEN SUBJECTED
 -- TO A REINSTALL SUBSTITUTION ARE REDUCIBLE
 
-kred-let-r : (K : Γ ⊢K⦂ ⟨ X ⟩ ⊸ Z [ n ]) →
+kred-let-r : (K : Γ ⊢K⦂ Y ⊸ Z [ n ]) →
              KRed K →
              CRedSubR' N →
-             SN (K aₖ R) →
+             GoodR n R →
              ---------------------------------
              KRed (K ∘l N [ M-rename wk₁ R ]r)
 
-kred-let-r {N = N} {R = R} K rK rN sR {r = r} {V = V} rV =
+kred-let-r {N = N} {R = R} K rK rN gR {r = r} {V = V} rV =
   sn-let-return (K-rename r K)
     (subst (λ z → SN (K-rename r K aₖ z)) (sym ([]r-wk-ren-sub r N R V))
-      (sn'→sn (credr-kred (K-rename r K) (kred-r K rK) (rN rV) (sn-ren-aₖ K sR))))
+      (sn'→sn (credr-kred (K-rename r K) (kred-r K rK) (rN rV) (goodr-r gR))))
 
-ared-await-r : (K : Γ ⊢K⦂ ⟨ X ⟩ ⊸ Z [ n ]) →
+ared-await-r : (K : Γ ⊢K⦂ Y ⊸ Z [ n ]) →
                KRed K →
                CRedSubR' N →
-               SN (K aₖ R) →
+               GoodR n R →
                ---------------------------------
                ARed K (N [ M-rename wk₁ R ]r)
 
-ared-await-r {N = N} {R = R} K rK rN sR {r = r} {V = V} rV =
+ared-await-r {N = N} {R = R} K rK rN gR {r = r} {V = V} rV =
   sn-await (K-rename r K)
     (subst (λ z → SN (K-rename r K aₖ z)) (sym ([]r-wk-ren-sub r N R V))
-      (sn'→sn (credr-kred (K-rename r K) (kred-r K rK) (rN rV) (sn-ren-aₖ K sR))))
+      (sn'→sn (credr-kred (K-rename r K) (kred-r K rK) (rN rV) (goodr-r gR))))
 
 
--- INTERRUPT HANDLERS ARE REDUCIBLE
+-- INTERRUPT HANDLERS ARE REDUCIBLE (BY WELL-FOUNDED INDUCTION ON THE NUMBER OF
+-- INTERRUPT FRAMES OF THE CONTINUATION, AND THEN ON THE MAXIMUM REDUCTION LENGTH,
+-- THE CONTINUATION, AND THE BODY OF THE HANDLER)
 
-sn-promise : (K : Γ ⊢K⦂ Y ⊸ Z [ k ]) →
+sn-promise : Acc _<_ k →
+             (K : Γ ⊢K⦂ Y ⊸ Z [ k ]) →
              KRed (K ∘l N) →
              CRedSubR' M →
              SNi (K-rename wk₁ K aₖ N) n →
              -----------------------------------
              {L : Γ ⊢M⦂ Z} → K `aₖ promise op ↦ M `in N ↝↝ L → SN L
 
-sn-promise K rK rM (sn h) (↝id (promise-↑ _ _ _)) =
-  sn'→sn (sn-↑ K (sn'→sn (λ r → sn-promise K (kred-↑ K rK) rM (sni-k-↑-e id (sn h)) (aₖ→`aₖ K r))))
-sn-promise K rK rM (sn h) (↝id (context-promise r)) =
-  sn'→sn (λ r' → sn-promise K (kred-↝ K r rK) rM (h (context-K (K-rename wk₁ K) r)) (aₖ→`aₖ K r'))
-sn-promise _ rK rM (sn h) (↝∘l K (let-promise _ _ _)) =
-  sn'→sn (λ r → sn-promise K (kred-comm-let K rK) rM (sn h) (aₖ→`aₖ K r))
-sn-promise K rK rM (sn h) (↝∘l K' (context-let (promise-↑ _ _ _))) =
-  sn'→sn (sn-↑ K (sn'→sn (λ r → sn-promise K (kred-↑ K rK) rM (sni-k-↑-e (K-rename _ (K' ∘l _)) (sn h)) (aₖ→`aₖ K r))))
-sn-promise K rK rM (sn h) (↝∘l _ (context-let (context-promise r))) =
-  sn'→sn (λ r' → sn-promise K (kred-↝ K r rK) rM (h (context-K (K-rename wk₁ K) r)) (aₖ→`aₖ K r'))
-sn-promise _ rK rM (sn h) (↝∘↓ K (↓-promise-op V M N)) =
+sn-promise a K rK rM (sn h) (↝id (promise-↑ _ _ _)) =
+  sn'→sn (sn-↑ K (sn'→sn (λ r → sn-promise a K (kred-↑ K rK) rM (sni-k-↑-e id (sn h)) (aₖ→`aₖ K r))))
+sn-promise a K rK rM (sn h) (↝id (context-promise r)) =
+  sn'→sn (λ r' → sn-promise a K (kred-↝ K r rK) rM (h (context-K (K-rename wk₁ K) r)) (aₖ→`aₖ K r'))
+sn-promise a _ rK rM (sn h) (↝∘l K (let-promise _ _ _)) =
+  sn'→sn (λ r → sn-promise a K (kred-comm-let K rK) rM (sn h) (aₖ→`aₖ K r))
+sn-promise a K rK rM (sn h) (↝∘l K' (context-let (promise-↑ _ _ _))) =
+  sn'→sn (sn-↑ K (sn'→sn (λ r → sn-promise a K (kred-↑ K rK) rM (sni-k-↑-e (K-rename _ (K' ∘l _)) (sn h)) (aₖ→`aₖ K r))))
+sn-promise a K rK rM (sn h) (↝∘l _ (context-let (context-promise r))) =
+  sn'→sn (λ r' → sn-promise a K (kred-↝ K r rK) rM (h (context-K (K-rename wk₁ K) r)) (aₖ→`aₖ K r'))
+sn-promise (acc rs) _ rK rM (sn h) (↝∘↓ K (↓-promise-op V M N)) =
   sn'→sn
     (subst (λ z → SN' (K aₖ let= z [ promise _ ↦ M `in return (` Hd) ]r `in ↓ _ (V-rename wk₁ V) N))
       (trans ren-id-m (cong (_[ id-subst [ V ]s ]m) ren-id-l))
@@ -360,54 +373,52 @@ sn-promise _ rK rM (sn h) (↝∘↓ K (↓-promise-op V M N)) =
         (K ∘l ↓ _ (V-rename wk₁ V) N)
         (kred-comm-↓ K rK)
         (promise _ ↦ M `in return (` Hd))
-        (sn'→sn (λ r →
-          sn-promise
-            (K ∘l ↓ _ (V-rename wk₁ V) N)
-            (kred-let (K ∘l ↓ _ (V-rename wk₁ V) N) (kred-comm-↓ K rK) cred-return)
-            rM
-            (sn→sni (sn'→sn (sn-let-return (K-rename wk₁ K)
-              (subst₂ (λ w u → SN (K-rename wk₁ K aₖ ↓ _ w u)) wk₂wk₁V[Hd] wk₂wk₁M[Hd] (sni→sn (sn h))))))
-            (aₖ→`aₖ (K ∘l ↓ _ (V-rename wk₁ V) N) r)))))
-sn-promise _ rK rM (sn h) (↝∘↓ K (↓-promise-op' _ _ _ _)) =
-  sn'→sn (λ r → sn-promise K (kred-comm-↓ K rK) rM (sn h) (aₖ→`aₖ K r))
-sn-promise K rK rM (sn h) (↝∘↓ K' (context-↓ (promise-↑ _ _ _))) =
-  sn'→sn (sn-↑ K (sn'→sn (λ r → sn-promise K (kred-↑ K rK) rM (sni-k-↑-e (K-rename _ (K' ∘↓ _ [ _ ])) (sn h)) (aₖ→`aₖ K r))))
-sn-promise K rK rM (sn h) (↝∘↓ _ (context-↓ (context-promise r))) =
-  sn'→sn (λ r' → sn-promise K (kred-↝ K r rK) rM (h (context-K (K-rename wk₁ K) r)) (aₖ→`aₖ K r'))
+        (λ p L rL → sn'→sn (λ r →
+          sn-promise (rs (s≤s p)) L
+            (kred-let L rL cred-return)
+            (credsubr'-r rM)
+            (sn→sni (sn'→sn (rL {r = wk₁} {V = ` Hd} (λ {_} {r} → vred-var {X = ⟨ _ ⟩} Hd {r = r}))))
+            (aₖ→`aₖ L r)))))
+sn-promise (acc rs) _ rK rM (sn h) (↝∘↓ K (↓-promise-op' _ _ _ _)) =
+  sn'→sn (λ r → sn-promise (rs ≤-refl) K (kred-comm-↓ K rK) rM (sn h) (aₖ→`aₖ K r))
+sn-promise a K rK rM (sn h) (↝∘↓ K' (context-↓ (promise-↑ _ _ _))) =
+  sn'→sn (sn-↑ K (sn'→sn (λ r → sn-promise a K (kred-↑ K rK) rM (sni-k-↑-e (K-rename _ (K' ∘↓ _ [ _ ])) (sn h)) (aₖ→`aₖ K r))))
+sn-promise a K rK rM (sn h) (↝∘↓ _ (context-↓ (context-promise r))) =
+  sn'→sn (λ r' → sn-promise a K (kred-↝ K r rK) rM (h (context-K (K-rename wk₁ K) r)) (aₖ→`aₖ K r'))
 
 cred-promise : CRedSubR' M → CRedSub' N → CRed (promise op ↦ M `in N)
 cred-promise rM rN K rK r =
-  sn-promise K (kred-let K rK (credsub'-r rN)) (credsubr'-r rM)
+  sn-promise (<-wellFounded _) K (kred-let K rK (credsub'-r rN)) (credsubr'-r rM)
     (sn→sni (sn'→sn (cred-kred (K-rename _ K) (kred-r K rK) (credsub'→cred rN)))) (aₖ→`aₖ K r)
 
 
 -- PROOFS OF THE REDUCIBILITY LEMMAS FOR HANDLER CODE (REINSTALL CONTEXT re X)
 
-credr-return : {V : Γ ⊢V⦂ ⟨ X ⟩} → VRed V → CRedR (return V)
-credr-return {V = V} rV K rK R sR = cred-return {V = V} rV K rK
+credr-return : VRed V → CRedR {X = X} (return V)
+credr-return {V = V} rV K rK R gR = cred-return {V = V} rV K rK
 
-credr-app : {V : Γ ⊢V⦂ Y ⇒ ⟨ X ⟩} {W : Γ ⊢V⦂ Y} → CRed (V · W) → CRedR (V · W)
-credr-app rVW K rK R sR = rVW K rK
+credr-app : {V : Γ ⊢V⦂ U ⇒ Y} {W : Γ ⊢V⦂ U} → CRed (V · W) → CRedR {X = X} (V · W)
+credr-app rVW K rK R gR = rVW K rK
 
 credr-reinstall : CRedR (reinstall {Γ = Γ} {X = X})
-credr-reinstall K rK R sR = sn→sn' sR
+credr-reinstall K rK R gR = subst (λ z → SN' (K aₖ z)) ren-id-m (sn→sn' (gR {r = id-ren} ≤-refl K rK))
 
-credr-let : CRed M → CRedSubR' N → CRedR (let= M `in N)
-credr-let rM rN K rK R sR = rM (K ∘l _) (kred-let-r K rK (credsubr'-r rN) sR)
+credr-let : CRedR M → CRedSubR' N → CRedR (let= M `in N)
+credr-let rM rN K rK R gR = rM (K ∘l _) (kred-let-r K rK (credsubr'-r rN) gR) R gR
 
 credr-↑ : CRedR M → CRedR (↑ op V M)
-credr-↑ rM K rK R sR = sn-↑ K (sn'→sn (rM K rK R sR))
+credr-↑ rM K rK R gR = sn-↑ K (sn'→sn (rM K rK R gR))
 
-credr-↓ : {M : Γ ⊢M⦂ ⟨ X ⟩} → CRed M → CRedR {X = X} (↓ op V M)
-credr-↓ rM K rK R sR = cred-↓ rM K rK
+credr-↓ : {M : Γ ⊢M⦂ Y} → CRed M → CRedR {X = X} (↓ op V M)
+credr-↓ rM K rK R gR = cred-↓ rM K rK
 
-credr-await : {V : Γ ⊢V⦂ ⟨ Y ⟩} {N : Γ ∷ Y ∣ re X ⊢M⦂ ⟨ X ⟩} → VRed V → CRedSubR' N → CRedR (await V until N)
-credr-await rV rN K rK R sR = rV K _ (ared-await-r K rK (credsubr'-r rN) sR)
+credr-await : {V : Γ ⊢V⦂ ⟨ U ⟩} {N : Γ ∷ U ∣ re X ⊢M⦂ Y} → VRed V → CRedSubR' N → CRedR (await V until N)
+credr-await rV rN K rK R gR = rV K _ (ared-await-r K rK (credsubr'-r rN) gR)
 
 credr-promise : CRedSubR' M → CRedSubR' N → CRedR (promise op ↦ M `in N)
-credr-promise rM rN K rK R sR r =
-  sn-promise K (kred-let-r K rK (credsubr'-r rN) sR) (credsubr'-r rM)
-    (sn→sni (sn'→sn (credr-kred (K-rename wk₁ K) (kred-r K rK) (credsubr'→credr rN) (sn-ren-aₖ K sR)))) (aₖ→`aₖ K r)
+credr-promise rM rN K rK R gR r =
+  sn-promise (<-wellFounded _) K (kred-let-r K rK (credsubr'-r rN) gR) (credsubr'-r rM)
+    (sn→sni (sn'→sn (credr-kred (K-rename wk₁ K) (kred-r K rK) (credsubr'→credr rN) (goodr-r gR)))) (aₖ→`aₖ K r)
 
 
 -- REDUCIBILITY IMPLIES STRONG NORMALISATION
@@ -430,7 +441,7 @@ VRedSub {Γ} V = {Γ' : Ctx} {s : Sub Γ Γ'} → SubRed s → VRed (V [ s ]v)
 CRedSub : Γ ⊢M⦂ X → Set
 CRedSub {Γ} M = {Γ' : Ctx} {s : Sub Γ Γ'} → SubRed s → CRed (M [ s ]m)
 
-CRedSubR : Γ ∣ re X ⊢M⦂ ⟨ X ⟩ → Set
+CRedSubR : Γ ∣ re X ⊢M⦂ Y → Set
 CRedSubR {Γ} M = {Γ' : Ctx} {s : Sub Γ Γ'} → SubRed s → CRedR (M [ s ]m)
 
 
@@ -466,8 +477,8 @@ cred-⨟ {s = s} {M = M} rs rM {r = r} {V = V} rV K rK =
   subst (λ z → SN' (K aₖ M-rename _ z)) (lift-⨟-eq M s r V) (rM (subred-[]s (subred-⨟ rs) rV) K rK)
 
 credr-⨟ : SubRed s → CRedSubR M → CRedSubR' (M [ lift s ]m)
-credr-⨟ {s = s} {M = M} rs rM {r = r} {V = V} rV K rK R sR =
-  subst (λ z → SN' (K aₖ M-rename _ z [ R ]r)) (lift-⨟-eq M s r V) (rM (subred-[]s (subred-⨟ rs) rV) K rK R sR)
+credr-⨟ {s = s} {M = M} rs rM {r = r} {V = V} rV K rK R gR =
+  subst (λ z → SN' (K aₖ M-rename _ z [ R ]r)) (lift-⨟-eq M s r V) (rM (subred-[]s (subred-⨟ rs) rV) K rK R gR)
 
 
 -- THE FUNDAMENTAL THEOREM OF LOGICAL RELATIONS
@@ -476,7 +487,7 @@ fund-v : (V : Γ ⊢V⦂ X) → VRedSub V
 
 fund-m : (M : Γ ⊢M⦂ X) → CRedSub M
 
-fund-mr : (M : Γ ∣ re X ⊢M⦂ ⟨ X ⟩) → CRedSubR M
+fund-mr : (M : Γ ∣ re X ⊢M⦂ Y) → CRedSubR M
 
 fund-v (` x) rs = rs x
 fund-v (`` c) rs = tt
@@ -497,7 +508,7 @@ fund-mr reinstall rs {r = r} = credr-reinstall {r = r}
 fund-mr (↑ op V M) rs = credr-↑ (fund-mr M rs)
 fund-mr (promise op ↦ M `in N) rs = credr-promise (credr-⨟ rs (fund-mr M)) (credr-⨟ rs (fund-mr N))
 fund-mr (await V until M) rs = credr-await (fund-v V rs) (credr-⨟ rs (fund-mr M))
-fund-mr (let= M `in N) rs = credr-let (fund-m M rs) (credr-⨟ rs (fund-mr N))
+fund-mr (let= M `in N) rs = credr-let (fund-mr M rs) (credr-⨟ rs (fund-mr N))
 fund-mr (↓ op V M) rs = credr-↓ (fund-m M rs)
 
 

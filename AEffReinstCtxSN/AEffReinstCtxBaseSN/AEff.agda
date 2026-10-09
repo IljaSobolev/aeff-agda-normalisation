@@ -83,7 +83,7 @@ data _∣_⊢M⦂_ Γ where
   reinstall      : -------
                    Γ ∣ re X ⊢M⦂ ⟨ X ⟩
 
-  let=_`in_      : Γ ∣ ∅ ⊢M⦂ X →
+  let=_`in_      : Γ ∣ Δ ⊢M⦂ X →
                    Γ ∷ X ∣ Δ ⊢M⦂ Y →
                    -------
                    Γ ∣ Δ ⊢M⦂ Y
@@ -249,7 +249,7 @@ _[_]r : Γ ∣ re X ⊢M⦂ Y → Γ ⊢M⦂ ⟨ X ⟩ → Γ ⊢M⦂ Y
 reinstall [ R ]r =
   R
 (let= M `in N) [ R ]r =
-  let= M `in (N [ M-rename wk₁ R ]r)
+  let= (M [ R ]r) `in (N [ M-rename wk₁ R ]r)
 (↑ op V M) [ R ]r =
   ↑ op V (M [ R ]r)
 (↓ op V M) [ R ]r =

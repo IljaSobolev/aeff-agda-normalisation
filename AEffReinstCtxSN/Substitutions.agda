@@ -73,8 +73,8 @@ mutual
 
 
 -- REINSTALL SUBSTITUTION: REPLACING THE FREE OCCURRENCES OF reinstall
--- (THOSE NOT INSIDE NESTED HANDLER CODE, let-BOUND COMPUTATIONS,
--- OR BODIES OF INTERRUPTS) BY A COMPUTATION R
+-- (THOSE NOT INSIDE NESTED HANDLER CODE OR BODIES OF INTERRUPTS)
+-- BY A COMPUTATION R
 
 infix 40 _[_]r
 
@@ -87,7 +87,7 @@ _[_]r : {Γ : Ctx} {X : VType} {oi : O × I} {C : CType} →
 reinstall [ R ]r =
   R
 (let= M `in N) [ R ]r =
-  let= M `in (N [ M-rename wk₁ R ]r)
+  let= (M [ R ]r) `in (N [ M-rename wk₁ R ]r)
 (↑ op p V M) [ R ]r =
   ↑ op p V (M [ R ]r)
 (↓ op V M) [ R ]r =

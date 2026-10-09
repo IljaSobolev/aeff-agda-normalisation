@@ -211,7 +211,7 @@ _~ₛ_ {Γ} s s† = {X : VType} (x : X ∈ Γ) → emb-tm-v (s x) ≡ s† (emb
 ~-[]r (V · W) R = refl
 ~-[]r reinstall R = refl
 ~-[]r (let= M `in N) R =
-  cong (B.let= emb-tm-m M `in_) (trans (~-[]r N (M-rename wk₁ R)) (cong (emb-tm-m N B.[_]r) (~ᵣ-wk₁-m R)))
+  cong₂ B.let=_`in_ (~-[]r M R) (trans (~-[]r N (M-rename wk₁ R)) (cong (emb-tm-m N B.[_]r) (~ᵣ-wk₁-m R)))
 ~-[]r (↑ op p V M) R =
   cong (B.↑ op (emb-tm-v V)) (~-[]r M R)
 ~-[]r (↓ op V M) R = refl
